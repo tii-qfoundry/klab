@@ -1,0 +1,43 @@
+# pyproject.toml for the KMeasurement project
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "KMeasurement"
+version = "0.1.0"
+authors = [
+  { name="Your Name", email="your.email@example.com" },
+]
+description = "A KLayout package for controlling measurement instruments."
+readme = "docs/README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "Framework :: KLayout",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering",
+]
+
+# Core dependencies required for the project to run.
+# These mirror the dependencies checked in the install.py script.
+dependencies = [
+    "qcodes>=0.39.0",
+    "pyvisa",
+    "pyvisa-py",
+    "qcodes_contrib_drivers",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "black",
+    "ruff",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/your-repo/KMeasurement" # Replace with your actual repo URL
+"Bug Tracker" = "https://github.com/your-repo/KMeasurement/issues" # Replace

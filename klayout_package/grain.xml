@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<package>
+  <name>KMeasurement</name>
+  <version>0.1.0</version>
+  <description>A package for controlling measurement instruments like SMUs and motor controllers from within KLayout.</description>
+  <author>Juan Villegas</author>
+  <category>macros</category>
+  <maintainer>jev1@nyu.edu</maintainer>
+  <license>MIT</license>
+
+  <!-- This tells KLayout that this package contains Python code -->
+  <language>python</language>
+
+  <!-- Files included in the package -->
+  <files>
+    <!-- The main installation macro -->
+    <file>pymacros/install.py</file>
+    
+    <!-- The Python package files -->
+    <file>python/klayout_measurement_tool/__init__.py</file>
+    <file>python/klayout_measurement_tool/plugin/__init__.py</file>
+    <file>python/klayout_measurement_tool/plugin/menu.py</file>
+    <file>python/klayout_measurement_tool/plugin/measurement_tab.py</file>
+    
+    <!-- Default technology configuration -->
+    <file>tech/default.yml</file>
+
+    <!-- Documentation files -->
+    <file>docs/readme.md</file>
+    
+
+  </files>
+
+  <!-- You can add dependencies on other salt packages here if needed -->
+  <dependencies>
+  </dependencies>
+
+</package>

@@ -1,0 +1,84 @@
+# Default Technology Specification for Measurements
+
+# This file defines the default rules and parameters for various measurements.
+# When a technology with a 'measurement.yml' or similar file is active,
+# the settings in that file will override these defaults where applicable.
+
+measurements:
+  - name: "IV_Sweep"
+    type: "VoltageSweep"
+    description: "Standard I-V curve sweep for a two-terminal device."
+    parameters:
+      start_voltage: -1.0   # Start voltage for the sweep
+      stop_voltage: 1.0     # Stop voltage for the sweep
+      step_voltage: 0.1     # Step size for voltage sweep
+      delay: 0.1            # s, delay between setting voltage and measuring current
+      current_limit: 0.01   # Standard current limit for the sweep
+      use_autorange_source: True # Use autoranging for source
+      use_autorange_sense: True  # Use autoranging for sense
+      manual_source_range: 1e-4 # Amps, if not using autorange
+      manual_sense_range: 20    # Volts, if not using autorange
+      use_4_wire: False   # Use 4-wire measurement
+      nplc: 1              # Number of points per curve, default is 1
+
+  - name: "VI_Sweep"
+    type: "CurrentSweep"
+    description: "Standard I-V curve sweep for a two-terminal device. Sweep current instead of voltage."
+    parameters:
+      start_current: 2e-5   # Start current for the sweep
+      stop_current: 4e-5    # Stop current for the sweep
+      step_current: 1e-6    # Step size for current sweep
+      delay: 0.1            # s, delay between setting current and measuring voltage
+      voltage_limit: 2      # Default voltage limit for the sweep
+      use_autorange_source: True # Use autoranging for source
+      use_autorange_sense: True  # Use autoranging for sense
+      manual_source_range: 1e-4 # Amps, if not using autorange
+      manual_sense_range: 20    # Volts, if not using autorange
+      use_4_wire: False   # Use 4-wire measurement
+      nplc: 1              # Number of points per curve, default is 1
+
+
+  - name: "Resistance_Measurement"
+    type: "FourPointProbe"
+    description: "Four-point probe resistance measurement."
+    parameters:
+      source_current: 0.001 # A
+      delay: 0.1            # s
+      voltage_limit: 10     # V
+      resistance_range: 10000 # Ohms, range for resistance measurement
+
+
+probes:
+  - name: "Default_DC_Probes"
+    type: "DC"
+    contact_resistance: 0.5 # Ohms (example parameter)
+    max_current: 1.0        # A
+
+
+file_format:
+  - name: "CSV"
+    extension: ".csv"
+    description: "Comma-separated values format for data storage."
+    options:
+      delimiter: ","
+      quotechar: "\""
+      escapechar: "\\"
+  - name: "JSON"
+    extension: ".json"
+    description: "JavaScript Object Notation format for data storage."
+    options:
+      indent: 4
+      sort_keys: True
+  - name: "XML"
+    extension: ".xml"
+    description: "Extensible Markup Language format for data storage."
+    options:
+      pretty_print: True
+      encoding: "UTF-8"
+
+file_storage:
+  - name: "Default_Storage"
+    type: "Local"
+    default_file_path: "./measurements/"
+    default_filename: "measurement_data"
+    file_format: "CSV"

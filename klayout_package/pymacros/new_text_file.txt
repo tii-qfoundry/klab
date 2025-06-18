@@ -1,0 +1,5 @@
+qcodes>=0.39.0
+pyvisa
+pyvisa-py
+qcodes_contrib_drivers
+packaging
