@@ -1,0 +1,49 @@
+# ==================================================================
+# klab Instrument Definition File for Keithley 2450 SMU
+# ==================================================================
+# This file defines the command sequences for the Keithley 2450 driver.
+
+# --- Properties ---
+# Defines instrument-specific constants and settings.
+properties:
+  # This instrument's specific command for reading measurement data
+  read_command: ":READ?"
+
+# --- Methods ---
+# Defines high-level methods as a sequence of SCPI commands.
+# Arguments can be passed from Python using named placeholders like {voltage}.
+methods:
+  # The sequence to run upon initialization
+  initialize:
+    - "*RST"
+    - ":SENSe:REMote ON" # Set 4-wire mode
+
+  # Sets the instrument to source voltage.
+  source_voltage:
+    - ":SOURce:FUNCtion VOLT"
+    - ":SOURce:VOLTage {voltage}"
+    - ":SOURce:VOLTage:ILIMit {current_compliance}"
+
+  # Sets the instrument to source current.
+  source_current:
+    - ":SOURce:FUNCtion CURR"
+    - ":SOURce:CURRent {current}"
+    - ":SOURce:CURRent:VLIMit {voltage_compliance}"
+  
+  # Turns the output on or off.
+  enable_source:
+    - ":OUTPut:STATe {state}" # Expects 'ON' or 'OFF'
+
+  # Sets up the instrument to measure voltage.
+  setup_measure_voltage:
+    - ":SENSe:FUNCtion 'VOLT'"
+    - ":SENSe:VOLTage:NPLCycles {nplc}"
+
+  # Sets up the instrument to measure current.
+  setup_measure_current:
+    - ":SENSe:FUNCtion 'CURR'"
+    - ":SENSe:CURRent:NPLCycles {nplc}"
+
+  measure_voltage:
+    - ":INITiate:IMMediate"
+    - ":FETCh:VOLTage?"

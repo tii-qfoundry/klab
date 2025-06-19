@@ -1,3 +1,13 @@
+"""
+klab - A Python package for KLayout integration with lab instrumentation.
+
+This package provides tools and utilities to enhance and automate instrument control in KLayout,
+a popular layout viewer and editor for integrated circuits.
+
+Copyright (c) 2025, Technology Innovation Institute. All rights reserved.
+
+"""
+
 import pya
 import sys
 import os
@@ -36,18 +46,6 @@ def get_pip_main():
         pya.MessageBox.critical("Fatal Installation Error", f"Could not import pip's main function. Your KLayout Python environment may have a broken pip installation.\n\nError: {e}", pya.MessageBox.Ok)
         return None
 
-def _get_klayout_python_info():
-    """
-    Gathers key platform and version info about KLayout's Python environment
-    to help pip resolve the correct binary wheels.
-    """
-    from packaging.tags import sys_tags
-    info = {
-        'version': f"{sys.version_info.major}.{sys.version_info.minor}",
-        'platforms': [str(tag) for tag in sys_tags()]
-    }
-    return info
-
 def parse_requirements(req_path):
     """
     Parses a requirements.txt file to yield package specifications.
@@ -80,7 +78,7 @@ def check_and_install_dependencies(pip_main, target_dir):
     except ImportError:
         print("- 'packaging' library not found. Installing it first...")
         try:
-            # We don't need platform info for packaging itself, as it's pure python.
+            # Use a simplified command for this initial install.
             command = ["install", "--upgrade", "--target", target_dir, "--no-build-isolation", "--only-binary=:all:", "packaging"]
             retcode = pip_main(command)
             if retcode != 0:
@@ -90,9 +88,6 @@ def check_and_install_dependencies(pip_main, target_dir):
             pya.MessageBox.warning("Installation Error", f"Could not install the 'packaging' library. klab cannot continue.\n\nError: {e}", pya.MessageBox.Ok)
             return False
 
-    # Now that 'packaging' is installed, we can get environment info.
-    py_info = _get_klayout_python_info()
-
     package_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
     reqs_file = os.path.join(package_root, 'requirements.txt')
     if not os.path.exists(reqs_file):
@@ -100,7 +95,6 @@ def check_and_install_dependencies(pip_main, target_dir):
         return False
 
     all_installed = True
-    missing_dependencies = []
     for req in parse_requirements(reqs_file):
         module_name = IMPORT_NAME_MAP.get(req.name, req.name.replace('-', '_'))
         try:
@@ -117,83 +111,27 @@ def check_and_install_dependencies(pip_main, target_dir):
         except (ImportError, importlib.metadata.PackageNotFoundError):
             print(f"- Dependency '{req.name}' not found or incompatible. Installing directly via pip API...")
             try:
-                # --- KEY CHANGE: Loop through platforms and try to install one by one ---
-                install_success = False
-                last_error_code = -1
-                
-                # Base command that is the same for all attempts
-                base_command = ["install", "--upgrade", "--target", target_dir, "--no-build-isolation", "--only-binary=:all:"]
-                if  sys.platform.startswith('win'):
-                    # On Windows, we use --no-deps to avoid issues with binary wheels.
-                    # This is because KLayout's Python environment may not have all dependencies installed.
-                    base_command.append("--no-deps")
-                    
-                    # Use --force-reinstall to ensure we get the correct version.
-                    base_command.append("--force-reinstall")
-                else:
-                    # On non-Windows platforms, we allow pip to resolve dependencies.
-                    pass
-                
-                # Attempt to install for each platform in the KLayout Python environment, until one succeeds.
-                print(f"  > KLayout Python version: {py_info['version']}")
-                for plat in py_info['platforms']:
-                    command = list(base_command) # Create a copy
-                    command.extend(["--python-version", py_info['version']])
-                    command.extend(["--platform", plat])
-                    # no cache if its the first install attempt
-                    if last_error_code != -1:
-                        command.append("--no-cache-dir")
-                    command.append(str(req))
+                # --- KEY CHANGE: Unified command for all packages ---
+                # We now force binary-only installation for ALL packages to prevent
+                # the build process from looking in the wrong numpy location.
+                command = ["install", "--upgrade", "--target", target_dir, "--no-build-isolation", "--only-binary=:all:", str(req)]
 
-                    # Call pip's main function with the command
-                    print(f"  > Attempting install with platform '{plat}'...")
-
-                    # Use the pip main function to execute the command
-                    # Note: pip_main expects a list of arguments, not a string.
-                    retcode = pip_main(command)
-                    if retcode == 0:
-                        install_success = True
-                        break # Exit the loop on first success
-                    else:
-                        last_error_code = retcode
-                
-                if not install_success:
-                    raise RuntimeError(f"pip failed to install '{req.name}' for all compatible platforms. Last exit code: {last_error_code}")
+                print(f"  > Calling pip.main({command})")
+                retcode = pip_main(command)
+                if retcode != 0:
+                    raise RuntimeError(f"pip exited with status {retcode} while installing {req.name}")
 
                 print(f"- Successfully installed/upgraded '{req.name}'.")
                 
                 importlib.invalidate_caches()
-                # Try to load the module, if there is a module missing error, it will be caught below.
-                try:
-                    # Import the module to ensure it was installed correctly.
-                    # This is important for binary packages that may not have been imported before.
-                    if module_name in sys.modules:
-                        del sys.modules[module_name]  # Clear cache if it was already loaded
-                    importlib.import_module(module_name)
-                except ImportError as e:
-                    error_msg = f"Module '{module_name}' was installed but could not be imported. This may indicate a binary compatibility issue.\n\n"
-                    # If there is a missing module error, add it to the dependency list.
-                    # This will allow the user to see which module is missing.
-
-                    if 'No module named' in e.args[0]: 
-                        print(f"ERROR: {error_msg}Additional dependency '{e.name}' is missing after installation.")
-                        if e.name not in missing_dependencies:
-                            missing_dependencies.append(e.name)
-                    else:
-                        print(f"ERROR: {error_msg}{e}")
-                    all_installed = False
-
+                importlib.import_module(module_name)
+                
             except (RuntimeError, ImportError) as e:
-                error_msg = f"Failed to install '{req.name}'.\n\n{e}"   
+                error_msg = f"Failed to install '{req.name}'.\n\n{e}"
                 print(f"ERROR: {error_msg}")
-                pya.MessageBox.warning("Dependency Installation Failed", error_msg, pya.MessageBox.Ok)
+                #pya.MessageBox.warning("Dependency Installation Failed", error_msg, pya.MessageBox.Ok)
                 all_installed = False
-                missing_dependencies.append(req.name)
-    
-    if not all_installed:
-        print(f"Some dependencies for {PACKAGE_NAME} could not be installed:")
-        for dep in missing_dependencies:
-            print(f"- {dep}")
+
     return all_installed
 
 def install():
@@ -208,10 +146,21 @@ def install():
         sys.path.insert(0, klab_python_dir)
         print(f"Added main package source directory to Python path: {klab_python_dir}")
     
-    # Determine the KLayout user site-packages directory as the target.
+    # --- CORRECTED PATH LOGIC ---
+    # Determine the KLayout user data directory in a platform-specific way.
+    if sys.platform == "win32":
+        # On Windows, the correct path is in %APPDATA%\KLayout
+        app_data_root = os.getenv('APPDATA')
+        if not app_data_root:
+             pya.MessageBox.critical("Fatal Error", "Could not determine APPDATA folder.", pya.MessageBox.Ok)
+             return
+        klayout_data_path = os.path.join(app_data_root, "KLayout")
+    else:
+        # On Linux/macOS, application_data_path() correctly points to ~/.klayout or similar.
+        klayout_data_path = pya.Application.instance().application_data_path()
+
     klayout_py_version = f"{sys.version_info.major}.{sys.version_info.minor}"
-    app_data_path = pya.Application.instance().application_data_path()
-    target_dir = os.path.join(app_data_path, "lib", f"python{klayout_py_version}", "site-packages")
+    target_dir = os.path.join(klayout_data_path, "lib", f"python{klayout_py_version}", "site-packages")
     os.makedirs(target_dir, exist_ok=True)
     
     # Add this directory to Python's path to ensure it's available.

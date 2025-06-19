@@ -13,7 +13,7 @@ The core philosophy is to integrate test-rule definitions and instrument control
 
 - Dynamic UI: A dedicated "Measurement" tab appears in KLayout, dynamically populating with controls corresponding to the instrument PCells present in your active layout.
 
-Extensible Architecture: The package is designed to be easily extendable. Adding support for new instruments is as simple as creating a new PCell and a corresponding qcodes driver.
+Extensible Architecture: The package is designed to be easily extendable. Adding support for new instruments is as simple as creating a new PCell and a corresponding drivers. It supports lightweigth development of drivers for SCPI based instruments.
 
 # 3. Installation
 KMeasurement is distributed as a KLayout Salt package (.kip).

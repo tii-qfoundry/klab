@@ -1,6 +1,3 @@
-rpds-py
 pyvisa
 pyvisa-py
-qcodes
-referencing
-jsonschema
+packaging

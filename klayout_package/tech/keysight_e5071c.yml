@@ -1,0 +1,51 @@
+# ==================================================================
+# klab Instrument Definition for Keysight E5071C VNA
+# ==================================================================
+# This file defines the commands, properties, and high-level methods
+# for the E5071C. The driver is generic; all instrument-specific
+# logic is contained here.
+
+# --- Instrument Properties ---
+properties:
+  data_format: "REAL,64" # ENA uses 64-bit float binary format.
+  data_header: "CALC1:DATA:FDAT?"
+  freq_header: "SENS1:FREQ:DATA?"
+  num_points_query: "SENS1:SWE:POIN?"
+
+# --- Command Aliases ---
+# Maps simple python methods to full SCPI commands.
+aliases:
+  preset: ":SYST:PRES"
+  clear_status: "*CLS"
+  wait_for_op_complete: "*WAI"
+  is_op_complete: "*OPC?"
+  trigger_single: ":TRIG:SING"
+  set_continuous_on: ":INIT1:CONT ON"
+  set_continuous_off: ":INIT1:CONT OFF"
+
+# --- High-level Methods ---
+# Defines complex functions as a sequence of SCPI commands.
+# Arguments can be passed using placeholders like {arg1}, {arg2}, etc.
+methods:
+  # Sets up a single trace to measure a specific S-parameter.
+  setup_trace:
+    - ":DISP:WIND1:STATE ON"
+    - ":CALC1:PAR:COUN 1"
+    - ":CALC1:PAR1:DEF '{arg1}'" # e.g., 'S21'
+  
+  # Configures the stimulus settings for a frequency sweep.
+  setup_sweep:
+    - ":SENS1:SWE:TYPE LIN"
+    - ":SENS1:FREQ:STAR {arg1}" # Start Freq
+    - ":SENS1:FREQ:STOP {arg2}" # Stop Freq
+    - ":SENS1:SWE:POIN {arg3}" # Number of points
+    - ":SOUR1:POW {arg4}"      # Power level in dBm
+    - ":SENS1:BAND {arg5}"      # IF Bandwidth in Hz
+
+  # A complete S21 measurement sequence.
+  measure_s21:
+    - "setup_trace('S21')" # Calls another method from this file
+    - "set_continuous_off"
+    - "setup_sweep(start_freq={arg1}, stop_freq={arg2}, points={arg3}, power={arg4}, if_bw={arg5})"
+    - "trigger_single"
+    - "is_op_complete" # Waits for sweep to finish

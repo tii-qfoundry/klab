@@ -1,0 +1,101 @@
+# ==================================================================
+# klab SCPI Command Alias Map
+# This file maps simple Python method names to full SCPI commands.
+# It provides a convenient layer of shortcuts over the dynamic
+# command builder. This list is based on the SCPI 1999.0 standard.
+# But  it is not exhaustive and users may need to extend it
+# for specific instruments or commands. Instruments are not expected
+# to follow the SCPI standard, so this map is a starting point.
+#
+# The format is:
+#   python_method_name: SCPI_COMMAND_STRING
+#
+# - A command ending in '?' is treated as a query (it will use 'ask').
+# - A command with '{}' is a setter that expects one argument.
+# ==================================================================
+
+# --- Common IEEE 488.2 Commands (Mandatory for SCPI) ---
+get_idn: '*IDN?'
+reset: '*RST'
+clear_status: '*CLS'
+wait_for_op_complete: '*WAI'
+is_op_complete: '*OPC?'
+self_test: '*TST?'
+get_status_byte: '*STB?'
+get_event_status: '*ESR?'
+set_service_enable: '*SRE {}'
+get_service_enable: '*SRE?'
+
+# --- System Commands ---
+get_error: 'SYST:ERR?'
+get_version: 'SYST:VERS?'
+beep: 'SYST:BEEP'
+set_local: 'SYST:LOC'
+set_remote: 'SYST:REM'
+
+# --- Status System ---
+get_questionable_status: 'STAT:QUES:COND?'
+get_operation_status: 'STAT:OPER:COND?'
+set_operation_enable: 'STAT:OPER:ENAB {}'
+get_operation_enable: 'STAT:OPER:ENAB?'
+set_questionable_enable: 'STAT:QUES:ENAB {}'
+get_questionable_enable: 'STAT:QUES:ENAB?'
+
+# --- Trigger System ---
+initiate: 'INIT'
+abort: 'ABOR'
+set_trigger_source: 'TRIG:SOUR {}' # e.g., 'BUS', 'IMM'
+get_trigger_source: 'TRIG:SOUR?'
+set_trigger_count: 'TRIG:COUN {}'
+get_trigger_count: 'TRIG:COUN?'
+set_trigger_delay: 'TRIG:DEL {}'
+get_trigger_delay: 'TRIG:DEL?'
+
+# --- Sense Subsystem (Generic for DMMs/SMUs) ---
+# SENS:FUNC is often instrument specific, e.g., 'VOLT:DC', 'CURR:AC'
+set_sense_function: 'SENS:FUNC "{}"'
+get_sense_function: 'SENS:FUNC?'
+set_sense_range: 'SENS:RANG {}'
+get_sense_range: 'SENS:RANG?'
+set_sense_autorange_on: 'SENS:RANG:AUTO ON'
+set_sense_autorange_off: 'SENS:RANG:AUTO OFF'
+get_sense_autorange: 'SENS:RANG:AUTO?'
+# NPLC = Number of Power Line Cycles (for integration time)
+set_nplc: 'SENS:NPLC {}' 
+get_nplc: 'SENS:NPLC?'
+
+# --- Source Subsystem (Generic for Power Supplies/SMUs) ---
+set_source_function: 'SOUR:FUNC {}'
+get_source_function: 'SOUR:FUNC?'
+set_frequency: 'SOUR:FREQ {}'
+get_frequency: 'SOUR:FREQ?'
+set_voltage: 'SOUR:VOLT {}'
+get_voltage: 'SOUR:VOLT?'
+set_current: 'SOUR:CURR {}'
+get_current: 'SOUR:CURR?'
+set_voltage_limit: 'SOUR:VOLT:LIM {}'
+get_voltage_limit: 'SOUR:VOLT:LIM?'
+set_current_limit: 'SOUR:CURR:LIM {}'
+get_current_limit: 'SOUR:CURR:LIM?'
+
+# --- Output Subsystem ---
+set_output_on: 'OUTP:STAT ON'
+set_output_off: 'OUTP:STAT OFF'
+get_output_state: 'OUTP:STAT?'
+set_output_impedance: 'OUTP:IMP {}'
+get_output_impedance: 'OUTP:IMP?'
+
+# --- Measurement Subsystem ---
+# These often combine setting a function and triggering a read.
+# The exact command can vary (e.g. READ? or MEASure:VOLTage:DC?)
+read_array: 'READ?'
+measure_voltage: 'MEAS:VOLT?'
+measure_current: 'MEAS:CURR?'
+measure_resistance: 'MEAS:RES?'
+measure_frequency: 'MEAS:FREQ?'
+
+# --- SMU-specific Aliases (example for Keithley) ---
+set_current_compliance: 'SENS:CURR:PROT {}'
+get_current_compliance: 'SENS:CURR:PROT?'
+set_voltage_compliance: 'SENS:VOLT:PROT {}'
+get_voltage_compliance: 'SENS:VOLT:PROT?'
