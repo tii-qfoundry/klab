@@ -1,0 +1,22 @@
+Metadata-Version: 2.4
+Name: klab
+Version: 0.1.0
+Summary: A KLayout package for controlling measurement instruments.
+Author-email: Juan E Villegas <jev1@nyu.edu>
+Project-URL: Homepage, https://github.com/jevillegasd/klab
+Project-URL: Bug Tracker, https://github.com/jevillegasd/klab/issues
+Classifier: Development Status :: 4 - Beta
+Classifier: Programming Language :: Python :: 3
+Classifier: Operating System :: OS Independent
+Classifier: Framework :: KLayout
+Classifier: Intended Audience :: Science/Research
+Classifier: Topic :: Scientific/Engineering
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: pyvisa>=1.11.0
+Requires-Dist: pyyaml>=6.0
+Requires-Dist: numpy>=1.19.0
+Provides-Extra: dev
+Requires-Dist: pytest; extra == "dev"
+Requires-Dist: black; extra == "dev"
+Requires-Dist: ruff; extra == "dev"

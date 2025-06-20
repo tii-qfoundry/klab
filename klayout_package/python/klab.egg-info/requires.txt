@@ -1,0 +1,8 @@
+pyvisa>=1.11.0
+pyyaml>=6.0
+numpy>=1.19.0
+
+[dev]
+pytest
+black
+ruff

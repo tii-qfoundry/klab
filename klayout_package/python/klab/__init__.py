@@ -7,3 +7,7 @@ a popular layout viewer and editor for integrated circuits.
 Copyright (c) 2025, Technology Innovation Institute. All rights reserved.
 
 """
+# Import instrument classes for easy access
+from .instruments import KlabInstrument, ScpiInstrument, yaml_method
+from .instruments import SMU, VNA
+from .instruments.drivers import *

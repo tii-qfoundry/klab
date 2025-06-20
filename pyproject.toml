@@ -1,20 +1,20 @@
-# pyproject.toml for the KMeasurement project
+# pyproject.toml for the klab project
 
 [build-system]
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "KMeasurement"
+name = "klab"
 version = "0.1.0"
 authors = [
-  { name="Your Name", email="your.email@example.com" },
+  { name="Juan E Villegas", email="jev1@nyu.edu" },
 ]
 description = "A KLayout package for controlling measurement instruments."
 readme = "docs/README.md"
 requires-python = ">=3.8"
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
     "Framework :: KLayout",
@@ -25,10 +25,9 @@ classifiers = [
 # Core dependencies required for the project to run.
 # These mirror the dependencies checked in the install.py script.
 dependencies = [
-    "qcodes>=0.39.0",
-    "pyvisa",
-    "pyvisa-py",
-    "qcodes_contrib_drivers",
+    "pyvisa>=1.11.0",
+    "pyyaml>=6.0",
+    "numpy>=1.19.0"
 ]
 
 [project.optional-dependencies]
@@ -38,6 +37,17 @@ dev = [
     "ruff",
 ]
 
+[tool.setuptools]
+packages = [
+    "klab",
+    "klab.instruments",
+    "klab.instruments.drivers"
+]
+package-dir = {"" = "klayout_package/python"}
+
+[tool.setuptools.package-data]
+klab = ["tech/*.yml"]
+
 [project.urls]
-"Homepage" = "https://github.com/your-repo/KMeasurement" # Replace with your actual repo URL
-"Bug Tracker" = "https://github.com/your-repo/KMeasurement/issues" # Replace
+"Homepage" = "https://github.com/jevillegasd/klab" # 
+"Bug Tracker" = "https://github.com/jevillegasd/klab/issues" # 

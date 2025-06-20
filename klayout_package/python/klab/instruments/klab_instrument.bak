@@ -7,15 +7,6 @@ a popular layout viewer and editor for integrated circuits.
 Copyright (c) 2025, Technology Innovation Institute. All rights reserved.
 
 """
-"""
-klab - A Python package for KLayout integration with lab instrumentation.
-
-This package provides tools and utilities to enhance and automate instrument control in KLayout,
-a popular layout viewer and editor for integrated circuits.
-
-Copyright (c) 2025, Technology Innovation Institute. All rights reserved.
-
-"""
 # ==================================================================
 # This file defines the core architecture for instruments, featuring
 # a base class for VISA communication and a specialized SCPI class
@@ -26,7 +17,7 @@ import pyvisa as visa
 import time
 import yaml
 import os
-import struct
+import re
 from abc import ABC, abstractmethod
 from typing import Tuple, List, Union
 
@@ -47,17 +38,8 @@ class NoQuote:
     def __str__(self):
         return self.value
     
-# --- Helper Function for Enum-like Classes ---
-def enum_parameter_class(class_name, value_map, default=None):
-    """A factory function to create a simple, enum-like class."""
-    cls = type(class_name, (), value_map)
-    cls.get_name = {v: k for k, v in value_map.items()}.get
-    if default is not None:
-        cls.default = value_map.get(default)
-    return cls
 
 
-    
 # --- Base Instrument Class ---
 class KlabInstrument(ABC):
     """The absolute base class for any instrument in klab."""
@@ -160,21 +142,116 @@ class SCPICommandProxy:
             command_str += "?"
             return self._instrument.ask(command_str)
 
+import functools
+def yaml_method(func):
+    """Decorator that marks a method as being implemented in YAML.
+    
+    This allows abstract methods to be satisfied while delegating to YAML.
+    """
+    @functools.wraps(func)
+    def wrapper(self, *args, **kwargs):
+        # Convert positional args to kwargs based on function signature
+        import inspect
+        sig = inspect.signature(func)
+        params = list(sig.parameters.keys())[1:]  # Skip 'self'
+        
+        for i, arg in enumerate(args):
+            if i < len(params):
+                kwargs[params[i]] = arg
+        
+        # Delegate to the YAML implementation
+        method_name = func.__name__
+        return self._execute_yaml_method(method_name, **kwargs)
+        
+    wrapper._is_yaml_method = True
+    return wrapper
 
 # --- SCPI Instrument Specialization ---
-class SCPIInstrument(KlabInstrument):
-    """An instrument that uses SCPI and supports dynamic command generation."""
+class ScpiInstrument(KlabInstrument):
+    """An instrument that uses SCPI and supports dynamic command generation and YAML-based method definitions."""
     def __init__(self, name, address, yaml_file=None, **kwargs):
         super().__init__(name, address, **kwargs)
         self.spec = {}
+        self.yaml_methods = []
         if yaml_file:
             self._load_spec_from_yaml(yaml_file)
+            self._discover_yaml_methods()
+            self._validate_yaml_methods()
+
+    def _discover_yaml_methods(self):
+        """Discover and list methods defined in the YAML spec file."""
+        if 'methods' in self.spec:
+            self.yaml_methods = list(self.spec['methods'].keys())
+            print(f"\nAvailable YAML-defined methods for {self.name}:")
+            for method in self.yaml_methods:
+                print(f"  - {method}")
+
+    def _validate_yaml_methods(self):
+        """Validate that all methods marked as YAML methods have YAML implementations."""
+        yaml_required_methods = []
+        
+        # Find all methods marked with @yaml_method
+        for attr_name in dir(self.__class__):
+            if attr_name.startswith('__'):
+                continue
+                
+            attr = getattr(self.__class__, attr_name)
+            if callable(attr) and hasattr(attr, '_is_yaml_method'):
+                yaml_required_methods.append(attr_name)
+
+        # Check that they have corresponding YAML implementations
+        missing_methods = []
+        for method_name in yaml_required_methods:
+            if 'methods' not in self.spec or method_name not in self.spec['methods']:
+                missing_methods.append(method_name)
+        
+        if missing_methods:
+            raise NotImplementedError(
+                f"The following methods are marked as @yaml_method but have no "
+                f"implementation in the YAML file '{self._yaml_file}': {missing_methods}"
+            )
+
+    def _implement_yaml_abstract_methods(self):
+        """Dynamically implement abstract methods using YAML definitions."""
+        # Get abstract methods from all parent classes
+        abstract_methods = set()
+        for cls in self.__class__.__mro__:
+            if hasattr(cls, '__abstractmethods__'):
+                abstract_methods.update(cls.__abstractmethods__)
+
+        # Check which abstract methods have YAML implementations
+        implemented_methods = []
+        for method_name in abstract_methods:
+            if 'methods' in self.spec and method_name in self.spec['methods']:
+                # Create a dynamic method that calls _execute_yaml_method
+                def create_method(method_name):
+                    def yaml_method(self, **params):
+                        return self._execute_yaml_method(method_name, **params)
+                    yaml_method.__name__ = method_name
+                    return yaml_method
+                
+                # Add the dynamic method to the instance (not the class)
+                bound_method = create_method(method_name).__get__(self, self.__class__)
+                setattr(self, method_name, bound_method)
+                implemented_methods.append(method_name)
+        
+        if implemented_methods:
+            print(f"\nImplemented abstract methods via YAML for {self.name}:")
+            for method in implemented_methods:
+                print(f"  - {method}")
 
     def _load_spec_from_yaml(self, yaml_file):
         """Loads the instrument specification from a YAML file."""
         try:
             current_dir = os.path.dirname(os.path.abspath(__file__))
-            yaml_path = os.path.join(current_dir, '..', 'tech', yaml_file)
+            project_root = os.path.dirname(current_dir)
+            yaml_path = os.path.join(project_root, 'tech', yaml_file)
+
+            # Chgeck in the project root and in the package root (its parent)
+            if not os.path.exists(yaml_path):
+                project_root = os.path.dirname(project_root)
+                yaml_path = os.path.join(project_root, 'tech', yaml_file)
+                
             if os.path.exists(yaml_path):
                 with open(yaml_path, 'r') as f:
                     self.spec = yaml.safe_load(f)
@@ -201,16 +278,78 @@ class SCPIInstrument(KlabInstrument):
         # This is the starting point of the chain.
         return SCPICommandProxy(self, [name.upper()])
 
+    def _safe_nested_call(self, call_string: str):
+        """
+        Safely parses and calls a nested method string from YAML without using eval().
+        Example: "set_current(current=1e-6, vlim=0.1)"
+        """
+        match = re.match(r"^\s*([\w\.]+)\((.*)\)\s*$", call_string)
+        if not match:
+            raise ValueError(f"Invalid nested method format in YAML: '{call_string}'")
+
+        method_name, args_str = match.groups()
+        method_to_call = getattr(self, method_name)
+        
+        # Parse keyword arguments
+        kwargs_to_pass = {}
+        if args_str.strip():
+            # This parser is simple and assumes no commas within argument values
+            arg_pairs = [p.strip() for p in args_str.split(',')]
+            for pair in arg_pairs:
+                key, value_str = [p.strip() for p in pair.split('=', 1)]
+                # Try to convert value to a number, otherwise treat as a string
+                try:
+                    value = float(value_str)
+                    if value.is_integer():
+                        value = int(value)
+                except ValueError:
+                    value = value_str.strip("'\"") # Strip quotes
+                kwargs_to_pass[key] = value
+
+        return method_to_call(**kwargs_to_pass)
+
     def _execute_yaml_method(self, method_name, **kwargs):
-        """Finds and executes a named method from the YAML specification."""
         if 'methods' not in self.spec or method_name not in self.spec['methods']:
-            raise AttributeError(f"Method '{method_name}' not found in YAML specification for {self.name}.")
+            raise AttributeError(f"Method '{method_name}' not found in YAML specification.")
         
         print(f"Executing YAML method: '{method_name}'")
         command_sequence = self.spec['methods'][method_name]
+        last_response = None
         for command in command_sequence:
             formatted_command = command.format(**kwargs)
-            self.write(formatted_command)
+            
+            # Check if the command is a nested method call or a raw SCPI command
+            if '(' in formatted_command and ')' in formatted_command:
+                print(f"  > Executing nested method: {formatted_command}")
+                # Use the new safe parser and caller instead of eval
+                last_response = self._safe_nested_call(formatted_command)
+            else:
+                # This is a raw SCPI command
+                if "?" in formatted_command:
+                    last_response = self.ask(formatted_command)
+                else:
+                    self.write(formatted_command)
+        return last_response
+
+    def get_available_methods(self):
+        """Returns a dictionary with information about available methods.
+        
+        Returns:
+            dict: Contains 'yaml_methods', 'python_methods', and 'all_methods' keys
+        """
+        # Get Python-defined methods (excluding built-ins and private methods)
+        python_methods = [
+            method for method in dir(self) 
+            if callable(getattr(self, method)) 
+            and not method.startswith('_')
+            and method not in dir(KlabInstrument)  # Exclude base class methods
+        ]
+        
+        return {
+            'yaml_methods': self.yaml_methods,
+            'python_methods': python_methods,
+            'all_methods': list(set(self.yaml_methods + python_methods))
+        }
 
     # --- Common SCPI Commands ---
     def get_idn(self) -> dict:
@@ -237,7 +376,11 @@ class SCPIInstrument(KlabInstrument):
         return int(response.strip())
 
 # --- Abstract Classes ---
-class SMU(SCPIInstrument):
+# These classes define the interface for specific instrument types. They can be used to create concrete
+# implementations for specific instruments drivers and ensure cross-compatibility.
+
+# Abstract classes of type SCPI will inherit the SCPI Command Proxy for dynamic command generation.
+class SMU(ScpiInstrument, ABC):
     """Abstract Base Class for a Source-Measure Unit."""
     @abstractmethod
     def source_voltage(self, voltage: float, current_compliance: float): raise NotImplementedError
@@ -250,6 +393,7 @@ class SMU(SCPIInstrument):
     @abstractmethod
     def enable_source(self, enable: bool): raise NotImplementedError
 
+#  Non SCPI instruments can still use the base class KlabInstrument provided visa can be used for communication.
 class MotorStage(KlabInstrument):
     """Abstract Base Class for a Motorized Stage."""
     @abstractmethod
@@ -263,21 +407,28 @@ class MotorStage(KlabInstrument):
     @abstractmethod
     def stop(self, axis: int = 0): raise NotImplementedError
 
+
+
+
+
+
 if __name__ == "__main__":
     # Example usage of the KlabInstrument and SCPIInstrument classes.
-    # This is a driverless example to demonstrate how to use the classes.
+    # This is a driverless example to demonstrate connect to an instrument 
+    # in absense of drivers, and with no direct SCPI queries.
     try:
-        smu = SCPIInstrument(name="SMU", address="TCPIP::192.168.0.95::INSTR")
-        #smu.write(":SOUR:FUNC CURR")
-        smu.sour.func(NoQuote('CURR'))  # Set source function to current
+        smu = ScpiInstrument(name="SMU", address="TCPIP::192.168.0.95::INSTR")
+        smu.write(":SOUR:FUNC CURR") # Example fo direct use of SCPI command
         smu.sour.curr(5e-9)
         smu.sour.curr.vlim(0.2)
         smu.sens.func('VOLT')
         smu.sens.volt.nplc(1)
         smu.count(5)
-        smu.write(":OUTP ON")
+        smu.outp(NoQuote('ON')) 
         smu.trac.trig("defbuffer1")
-        output = smu.trac.data(q,1,5,"defbuffer1", NoQuote('SOUR'),NoQuote('READ'))  # Fetch data from the trace buffer
+        # Fetch data from the trace buffer. The use of the query marker `q` allows
+        # to pass  queries with arguments.
+        output = smu.trac.data(q,1,5,"defbuffer1", NoQuote('SOUR'),NoQuote('READ'))
         smu.write(":OUTP OFF")
         print(f"Measured voltage: {output} V")
         smu.close()

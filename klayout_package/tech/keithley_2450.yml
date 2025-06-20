@@ -9,6 +9,9 @@ properties:
   # This instrument's specific command for reading measurement data
   read_command: ":READ?"
 
+#Staus byte parser:
+  
+
 # --- Methods ---
 # Defines high-level methods as a sequence of SCPI commands.
 # Arguments can be passed from Python using named placeholders like {voltage}.
@@ -16,34 +19,49 @@ methods:
   # The sequence to run upon initialization
   initialize:
     - "*RST"
-    - ":SENSe:REMote ON" # Set 4-wire mode
-
-  # Sets the instrument to source voltage.
-  source_voltage:
-    - ":SOURce:FUNCtion VOLT"
-    - ":SOURce:VOLTage {voltage}"
-    - ":SOURce:VOLTage:ILIMit {current_compliance}"
-
-  # Sets the instrument to source current.
-  source_current:
-    - ":SOURce:FUNCtion CURR"
-    - ":SOURce:CURRent {current}"
-    - ":SOURce:CURRent:VLIMit {voltage_compliance}"
+    - "*CLS"
   
   # Turns the output on or off.
   enable_source:
     - ":OUTPut:STATe {state}" # Expects 'ON' or 'OFF'
 
-  # Sets up the instrument to measure voltage.
-  setup_measure_voltage:
-    - ":SENSe:FUNCtion 'VOLT'"
-    - ":SENSe:VOLTage:NPLCycles {nplc}"
-
   # Sets up the instrument to measure current.
-  setup_measure_current:
-    - ":SENSe:FUNCtion 'CURR'"
-    - ":SENSe:CURRent:NPLCycles {nplc}"
+  source_voltage:
+    - "*RST"
+    - "SENS:FUNC \"CURR\""
+    - "SENS:CURR:RANG:AUTO ON"
+    - "SOUR:FUNC VOLT"
+    - "SOUR:DEL 0.1"
+    - "SOUR:VOLT {voltage}"
+    - "SOUR:VOLT:ILIM {current_compliance}"
+    - "COUNT {count}"
+    
 
-  measure_voltage:
-    - ":INITiate:IMMediate"
-    - ":FETCh:VOLTage?"
+  # Sets up the instrument to measure voltage.
+  source_current:
+    - "*RST"
+    - "SENS:FUNC \"VOLT\""
+    - "SENS:VOLT:RANG:AUTO ON"
+    - "SOUR:FUNC CURR"
+    - "SOUR:DEL 0.1"
+    - "SOUR:CURR {current}"
+    - "SOUR:CURR:VLIM {voltage_compliance}"
+
+  # Setup instrument to measure resistance.
+  set_resistance:
+    - source_current(current={current}, voltage_compliance={voltage_compliance}, count={count})
+    - "SENS:VOLT:UNIT OHM"
+    - "SENS:VOLT:OCOM ON"
+
+  read_measurement:
+    - "COUNT {count}"
+    - "OUTP ON"
+    - "TRAC:TRIG \"defbuffer1\""
+    - "*WAI"
+    - "TRAC:DATA? 1, {count}, \"defbuffer1\", SOUR, READ"
+    - "OUTP OFF"
+
+  meas_resistance:
+    - "*CLS"
+    - set_resistance(current={current}, voltage_compliance={voltage_compliance}, count={count})
+    - read_measurement(count={count})

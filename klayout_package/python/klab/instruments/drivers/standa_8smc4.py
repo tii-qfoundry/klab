@@ -6,7 +6,8 @@
 # use SCPI commands but instead uses a custom binary protocol.
 # ==================================================================
 
-from klab.instrument import MotorStage, enum_parameter_class
+from ..abstract_classes import MotorStage
+from ..klab_instrument import enum_parameter_class
 import pyvisa as visa
 import struct
 import time
