@@ -15,7 +15,7 @@ package_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'py
 sys.path.insert(0, package_path)
 
 
-from klab.drivers.keithley_2450 import Keithley2450
+from klab.instruments.drivers import Keithley2450
 
 # --- Setup ---
 # IMPORTANT: Replace with the actual VISA address of your instrument

@@ -13,7 +13,6 @@ Copyright (c) 2025, Technology Innovation Institute. All rights reserved.
 # ==================================================================
 
 import pyvisa
-import time
 
 class KlabInstrument:
     """Base class for all klab instruments."""

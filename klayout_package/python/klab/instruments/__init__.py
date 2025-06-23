@@ -7,4 +7,4 @@ from .yaml_utils import yaml_method
 from .abstract_classes import SMU, VNA
 
 # Import all drivers
-from .drivers.init import *
+from .drivers import *

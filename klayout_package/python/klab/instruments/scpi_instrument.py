@@ -6,12 +6,11 @@
 # YAML-based method definitions.
 # ==================================================================
 
-from .klab_instrument import KlabInstrument
-from .yaml_utils import load_yaml_spec
+from pyvisa import VisaIOError
+from klab.instrument import KlabInstrument, load_yaml_spec
 import re
 import time
 
-from pyvisa import VisaIOError
 
 class _QueryMarker: pass
 q = _QueryMarker()

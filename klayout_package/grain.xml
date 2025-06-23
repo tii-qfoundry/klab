@@ -26,7 +26,8 @@
     <!-- Driver files -->
     <file>python/klab/instruments/drivers/__init__.py</file>
     <file>python/klab/instruments/drivers/keithley_2450.py</file>
-    
+    <file>python/klab/instruments/drivers/standa_8smc4.py</file>
+
     <!-- Technology / Configuration files -->
     <file>tech/keithley2450.yml</file>
     <file>tech/e5071c_vna.yml</file>
