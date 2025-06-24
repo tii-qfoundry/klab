@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <package>
   <name>klab</name>
-  <version>0.1.0</version>
+  <version>0.2.0</version>
   <description>A package for controlling measurement instruments like SMUs and motor controllers from within KLayout.</description>
-  <author>Juan Villegas</author>
+  <author>Juan E Villegas</author>
   <category>macros</category>
   <maintainer>jev1@nyu.edu</maintainer>
   <license></license>
@@ -11,8 +11,15 @@
   <!-- This tells KLayout that this package contains Python code -->
   <language>python</language>
 
+  <!-- This macro will be executed upon installation to set up dependencies -->
+  <startup-macro>pymacros.install.install</startup-macro>
+
   <!-- Files included in the package -->
   <files>
+    <!-- Installation and requirements -->
+    <file>pymacros/install.py</file>
+    <file>requirements.txt</file>
+
     <!-- Main package files -->
     <file>python/klab/__init__.py</file>
 
@@ -26,15 +33,31 @@
     <!-- Driver files -->
     <file>python/klab/instruments/drivers/__init__.py</file>
     <file>python/klab/instruments/drivers/keithley_2450.py</file>
+    <file>python/klab/instruments/drivers/keysight_E5080B.py</file>
     <file>python/klab/instruments/drivers/standa_8smc4.py</file>
+    <file>python/klab/instruments/drivers/genericSMU.py</file>
+
+    <!-- PCell Files -->
+    <file>python/klab/pcells/resistanceMeasurement.py</file>
+    <file>python/klab/pcells/library.py</file>
+
+    <!-- KLayout Plugin UI files -->
+    <file>python/klab/plugin/__init__.py</file>
+    <file>python/klab/plugin/menu.py</file>
+    <file>python/klab/plugin/measurementDock.py</file>
+    <file>python/klab/lib/measurement_menu.rb</file>
+    <file>python/klab/lib/dev_menu.rb</file>
 
     <!-- Technology / Configuration files -->
-    <file>tech/keithley2450.yml</file>
-    <file>tech/e5071c_vna.yml</file>
+    <file>tech/keithley_2450.yml</file>
+    <file>tech/keysight_e5071c.yml</file>
+    <file>tech/measurement_default.yml</file>
+    <file>tech/scpi_map.yaml</file>
     
     <!-- Documentation and Examples -->
-    <file>docs/README.md</file>
-    <file>examples/example_keithley_usage.py</file>
+    <file>docs/readme.md</file>
+    <file>docs/instructions.md</file>
+    <file>examples/example_SMU.py</file>
   </files>
   
   <dependencies></dependencies>

@@ -1,7 +1,12 @@
-# Base instrument classes
-from .klab_instrument import KlabInstrument
-from .scpi_instrument import ScpiInstrument, SCPICommandProxy
-from .yaml_utils import yaml_method
+"""
+klab - A Python package for KLayout integration with lab instrumentation.
+
+This package provides tools and utilities to enhance and automate instrument control in KLayout,
+a popular layout viewer and editor for integrated circuits.
+
+Copyright (c) 2025, Technology Innovation Institute. All rights reserved.
+
+"""
 
 # Abstract instrument classes
 from .abstract_classes import SMU, VNA

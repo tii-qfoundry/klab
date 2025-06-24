@@ -99,8 +99,9 @@ class Keithley2450(SMU):
             raise ValueError("Function must be one of 'VOLT', 'CURR', or 'RES'")
         
         # This method uses the dynamic proxy for its implementation.
-        self.sense[func].average.count(count)
-        self.sense[func].average.state('ON')
+        getattr(self.sense, func).average.count(count)
+        getattr(self.sense, func).average.state('ON')
+        #self.sense[func].average.state('ON')
         print(f"Set averaging for {func} to {count} readings.")
 
     # Or directly query SCPI commands

@@ -1,3 +1,12 @@
+"""
+klab - A Python package for KLayout integration with lab instrumentation.
+
+This package provides tools and utilities to enhance and automate instrument control in KLayout,
+a popular layout viewer and editor for integrated circuits.
+
+Copyright (c) 2025, Technology Innovation Institute. All rights reserved.
+
+"""
 
 # ==================================================================
 # This file defines the core architecture for SCPI Instruments. 
@@ -7,7 +16,8 @@
 # ==================================================================
 
 from pyvisa import VisaIOError
-from klab.instrument import KlabInstrument, load_yaml_spec
+from .klab_instrument import KlabInstrument
+from .yaml_utils import load_yaml_spec
 import re
 import time
 
@@ -148,10 +158,8 @@ class ScpiInstrument(KlabInstrument):
             formatted_command = cmd_template.format(**kwargs)
 
             if '(' in formatted_command and ')' in formatted_command:
-                print(f"  > Executing nested method: {formatted_command}")
                 last_response = self._safe_nested_call(formatted_command)
             else:
-                print(f"  > Executing command: {formatted_command}")
                 last_response = self.write(formatted_command) if cmd_type == 'write' else self.query(formatted_command)
             
             if last_response is not None and (not isinstance(last_response, list) or last_response):
@@ -238,22 +246,54 @@ class ScpiInstrument(KlabInstrument):
         response = self.ask("*STB?")
         return int(response.strip())
     
+    # # Overload the query method to handle SCPI checks for when the response is ready
+    # def query(self, command, retries=5, delay=0.5):
+    #     """Send a query command and return the response, with retries for connection errors."""
+    #     attempt = 0
+    #     while attempt < retries:
+    #         try:
+    #             OPC = self._visa_instrument.query("*OPC?")
+    #             if int(OPC.strip()) == 1:
+    #                 result = self._visa_instrument.query(command)
+    #                 return result.strip()
+    #             else:
+    #                 #time.sleep(delay)
+    #                 raise ConnectionError(f"Instrument not ready for query: {command}")
+    #         except VisaIOError as e:
+    #             print(f"VISA IO Error during query: {e} (attempt {attempt+1}/{retries})")
+    #             time.sleep(delay)
+    #             attempt += 1
+                
+    #     raise ConnectionError(f"Failed to query '{command}' after {retries} attempts due to repeated VISA IO Errors.")
     # Overload the query method to handle SCPI checks for when the response is ready
+    
+
     def query(self, command, retries=5, delay=0.5):
-        """Send a query command and return the response, with retries for connection errors."""
+        """
+        Send a query command and return the response. This method is designed to be robust
+        for commands that may take time to execute by using SCPI synchronization.
+        It writes the command, waits for the operation to complete, and then reads the result,
+        preventing instrument buffer mismatches.
+        """
+        if not self._visa_instrument:
+            print(f"Warning: {self.name} is not connected")
+            return None
+        
+        # super().write(command)
         attempt = 0
         while attempt < retries:
             try:
-                OPC = self._visa_instrument.query("*OPC?")
-                time.sleep(delay)
-                if int(OPC.strip()) == 1:
-                    result = self._visa_instrument.query(command)
-                    return result.strip()
-                else:
-                    pass
-                    #raise ConnectionError(f"Instrument not ready for query: {command}")
+                result = self._visa_instrument.query(command)
+                return result.strip()
             except VisaIOError as e:
                 print(f"VISA IO Error during query: {e} (attempt {attempt+1}/{retries})")
-                attempt += 1
+                # Before retrying, clear the instrument buffer to avoid reading stale data.
+                try:
+                    self._visa_instrument.clear()
+                except Exception as clear_e:
+                    print(f"Could not clear VISA buffer: {clear_e}")
                 
+                time.sleep(delay)
+                attempt += 1
+        
         raise ConnectionError(f"Failed to query '{command}' after {retries} attempts due to repeated VISA IO Errors.")
