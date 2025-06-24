@@ -79,6 +79,22 @@ def parse_requirements(req_path):
             if line and not line.startswith('#'):
                 yield Requirement(line)
 
+def is_klayout_package_installed(package_name):
+    """
+    Checks if a KLayout package is installed by looking for its folder
+    in the user's KLayout package directory ('salt' folder).
+    """
+    app = pya.Application.instance()
+    user_data_path = app.application_data_path()
+    salt_dir = os.path.join(user_data_path, "salt")
+    package_path = os.path.join(salt_dir, package_name)
+    
+    if os.path.isdir(package_path):
+        print(f"[{PACKAGE_NAME}] Found required KLayout package '{package_name}'.")
+        return True
+    else:
+        return False
+    
 def check_and_install_dependencies(pip_main, target_dir):
     """
     Checks for required Python packages and their versions, and installs them 
@@ -223,13 +239,18 @@ if parent_dir not in sys.path:
 # Execute the installation when KLayout loads this macro.
 if __name__ == "__main__":
     # If this script is run directly, perform the installation.
-    print(f"Running {PACKAGE_NAME} installation script...")
-    install()
+    REQUIRED_PACKAGE = "Python_packages_for_KLayout"
+    if not is_klayout_package_installed('Python_packages_for_KLayout'):
+        pya.MessageBox.warning("Installation Required", f"The {REQUIRED_PACKAGE} package is not installed. Please add it using the package managaer and re-run the klab instalation script.", pya.MessageBox.Ok)
+    else:
+        
+      print(f"Running {PACKAGE_NAME} installation script...")
+      install()
     
 
-    from klab import KLabPCellLibrary
-    # Register the PCell library with KLayout
-    KLabPCellLibrary()
+      from klab import KLabPCellLibrary
+      # Register the PCell library with KLayout
+      KLabPCellLibrary()
 
 
 
