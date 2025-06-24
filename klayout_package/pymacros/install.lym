@@ -242,8 +242,8 @@ if __name__ == "__main__":
     REQUIRED_PACKAGE = "Python_packages_for_KLayout"
     if not is_klayout_package_installed('Python_packages_for_KLayout'):
         pya.MessageBox.warning("Installation Required", f"The {REQUIRED_PACKAGE} package is not installed. Please add it using the package managaer and re-run the klab instalation script.", pya.MessageBox.Ok)
+        print(f"Running {PACKAGE_NAME} installation script...")
     else:
-        
       print(f"Running {PACKAGE_NAME} installation script...")
       install()
     
