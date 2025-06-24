@@ -34,7 +34,6 @@ methods:
     - "SOUR:DEL 0.1"
     - "SOUR:VOLT {voltage}"
     - "SOUR:VOLT:ILIM {current_compliance}"
-    - "COUNT {count}"
     
 
   # Sets up the instrument to measure voltage.
@@ -49,19 +48,20 @@ methods:
 
   # Setup instrument to measure resistance.
   set_resistance:
-    - source_current(current={current}, voltage_compliance={voltage_compliance}, count={count})
+    - source_current(current={current}, voltage_compliance={voltage_compliance})
     - "SENS:VOLT:UNIT OHM"
     - "SENS:VOLT:OCOM ON"
 
-  read_measurement:
+  run_measurement:
     - "COUNT {count}"
     - "OUTP ON"
     - "TRAC:TRIG \"defbuffer1\""
     - "*WAI"
+    - wait(seconds=2)
     - "TRAC:DATA? 1, {count}, \"defbuffer1\", SOUR, READ"
     - "OUTP OFF"
 
   meas_resistance:
     - "*CLS"
     - set_resistance(current={current}, voltage_compliance={voltage_compliance}, count={count})
-    - read_measurement(count={count})
+    - run_measurement(count={count})

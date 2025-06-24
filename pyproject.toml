@@ -38,11 +38,7 @@ dev = [
 ]
 
 [tool.setuptools]
-packages = [
-    "klab",
-    "klab.instruments",
-    "klab.instruments.drivers"
-]
+packages = { find = {} }
 package-dir = {"" = "klayout_package/python"}
 
 [tool.setuptools.package-data]

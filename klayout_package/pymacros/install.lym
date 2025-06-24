@@ -1,3 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<klayout-macro>
+ <description/>
+ <version/>
+ <category>pymacros</category>
+ <prolog/>
+ <epilog/>
+ <doc/>
+ <autorun>true</autorun>
+ <autorun-early>false</autorun-early>
+ <priority>0</priority>
+ <shortcut/>
+ <show-in-menu>false</show-in-menu>
+ <group-name/>
+ <menu-path/>
+ <interpreter>python</interpreter>
+ <dsl-interpreter-name/>
+ <text>
+ 
 """
 klab - A Python package for KLayout integration with lab instrumentation.
 
@@ -16,7 +35,9 @@ import importlib
 import shutil
 from importlib.metadata import version as get_version
 from packaging.version import Version
-
+import traceback
+        
+        
 # This script implements the strategy of calling pip's internal main function
 # to install packages into KLayout's user site-packages directory.
 
@@ -111,12 +132,9 @@ def check_and_install_dependencies(pip_main, target_dir):
         except (ImportError, importlib.metadata.PackageNotFoundError):
             print(f"- Dependency '{req.name}' not found or incompatible. Installing directly via pip API...")
             try:
-                # --- KEY CHANGE: Unified command for all packages ---
-                # We now force binary-only installation for ALL packages to prevent
-                # the build process from looking in the wrong numpy location.
                 command = ["install", "--upgrade", "--target", target_dir, "--no-build-isolation", "--only-binary=:all:", str(req)]
 
-                print(f"  > Calling pip.main({command})")
+                print(f"  &gt; Calling pip.main({command})")
                 retcode = pip_main(command)
                 if retcode != 0:
                     raise RuntimeError(f"pip exited with status {retcode} while installing {req.name}")
@@ -133,7 +151,7 @@ def check_and_install_dependencies(pip_main, target_dir):
                 all_installed = False
 
     return all_installed
-
+        
 def install():
     """
     This function is called by KLayout to install the plugin.
@@ -146,7 +164,6 @@ def install():
         sys.path.insert(0, klab_python_dir)
         print(f"Added main package source directory to Python path: {klab_python_dir}")
     
-    # --- CORRECTED PATH LOGIC ---
     # Determine the KLayout user data directory in a platform-specific way.
     if sys.platform == "win32":
         # On Windows, the correct path is in %APPDATA%\KLayout
@@ -168,7 +185,7 @@ def install():
         sys.path.insert(0, target_dir)
         print(f"Added KLayout user site-packages directory to Python path: {target_dir}")
 
-    # Set KLAYOUT_PYTHONHOME if it is not already defined.
+    # Set KLAYOUT_PYTHONHOME if it is not already defined.`
     if 'KLAYOUT_PYTHONHOME' not in os.environ:
         os.environ['KLAYOUT_PYTHONHOME'] = target_dir
         print(f"Set KLAYOUT_PYTHONHOME environment variable to: {target_dir}")
@@ -186,14 +203,35 @@ def install():
 
     # Register the menu.
     try:
-        from klab.plugin.menu import register_menu
+        from klab.plugin.menu import refresh_measurement_dock
         main_window = pya.Application.instance().main_window()
-        register_menu(main_window)
+        refresh_measurement_dock()
         print(f"{PACKAGE_NAME} package loaded successfully.")
     except Exception as e:
         print(f"An error occurred while loading the {PACKAGE_NAME} package: {e}")
-        import traceback
-        traceback.print_exc()
+        
 
+# Import the reload function from dev_tools to refresh the package. 
+# First add the parent directory to the system path to allow for relative imports.
+
+parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if parent_dir not in sys.path:
+    sys.path.insert(0, parent_dir)
+    print(f"Added parent directory to Python path: {parent_dir}")
+
+    
 # Execute the installation when KLayout loads this macro.
-install()
+if __name__ == "__main__":
+    # If this script is run directly, perform the installation.
+    print(f"Running {PACKAGE_NAME} installation script...")
+    install()
+    
+
+    from klab import KLabPCellLibrary
+    # Register the PCell library with KLayout
+    KLabPCellLibrary()
+
+
+
+    </text>
+</klayout-macro>

@@ -1,3 +1,12 @@
+"""
+klab - A Python package for KLayout integration with lab instrumentation.
+
+This package provides tools and utilities to enhance and automate instrument control in KLayout,
+a popular layout viewer and editor for integrated circuits.
+
+Copyright (c) 2025, Technology Innovation Institute. All rights reserved.
+
+"""
 # ==================================================================
 # A hybrid driver for the Keithley 2450 SMU, demonstrating three
 # ways of defining and calling methods:
@@ -30,7 +39,7 @@ class Keithley2450(SMU):
             self.initialize()
 
     # --- Explicitly Defined High-Level Methods ---
-    # These methods provide a clean, user-friendly interface.
+    # These methods provide a clean, user-friendly interface. 
     # Their implementation uses the dynamic SCPI proxy. They can send
     # structured commands to the instrument, which are not defined in the driver
     # but are constructed on-the-fly. When using abstract classes like SMU, abstract 
@@ -38,12 +47,8 @@ class Keithley2450(SMU):
     # implemented in the YAML file.
 
 
-    # Methods specified in the YAML driver file can be called directly.
-    # def source_voltage(self, voltage: float, current_compliance: float=1e-3):
-    #     """Configures the instrument to source a specific voltage."""
-    #     self.set_voltage(voltage=voltage,ilim=current_compliance)
-
-    @yaml_method # Use this decorator to indicate that this method is defined in the YAML file.
+    # Use this decorator to indicate that this method is defined in the YAML driver file.
+    @yaml_method 
     def source_voltage(self, voltage: float, current_compliance: float):
         """Set the SMU to source voltage mode with specified compliance.
         Implemented in YAML."""
@@ -54,6 +59,7 @@ class Keithley2450(SMU):
         """Configures the instrument to source a specific current."""
         pass
 
+    # Yaml implememted methods can be invoqued from other methods.
     def measure_voltage(self, current = 1e-3) -> float:
         """Measures voltage. """
         self.source_current(current =current)
@@ -64,8 +70,11 @@ class Keithley2450(SMU):
         self.source_voltage(voltage = voltage)
         return self.read_measurement()
     
-    # Use dymaic SCPI commands to enable or disable the source.
-    # This method is not defined in the YAML file, but uses the dynamic SCPI proxy.
+    # Use dymaic SCPI commands: the method 'output' is not defined in the YAML file, 
+    # but falls back to use the dynamic SCPI proxy. Text passed to some methods needs
+    # to be wrapped in NoQuote() to avoid adding quotes around it. This depends on the
+    # SCPI command syntax for your instrument.
+
     def enable_source(self, enable:bool = True):
         return self.output(NoQuote('ON') if enable else NoQuote('OFF'))
     
@@ -90,8 +99,9 @@ class Keithley2450(SMU):
             raise ValueError("Function must be one of 'VOLT', 'CURR', or 'RES'")
         
         # This method uses the dynamic proxy for its implementation.
-        self.sense[func].average.count(count)
-        self.sense[func].average.state('ON')
+        getattr(self.sense, func).average.count(count)
+        getattr(self.sense, func).average.state('ON')
+        #self.sense[func].average.state('ON')
         print(f"Set averaging for {func} to {count} readings.")
 
     # Or directly query SCPI commands
