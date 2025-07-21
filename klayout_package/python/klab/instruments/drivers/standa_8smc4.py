@@ -9,8 +9,7 @@ Copyright (c) 2025, Technology Innovation Institute. All rights reserved.
 
 import os
 import pathlib
-import libximc as ximc
-from libximc import Axis
+import libximc.highlevel as ximc
 
 from klab.instruments.abstract_classes import MotorStage
 from klab.instruments.klab_instrument import CommunicationBackend

@@ -8,16 +8,28 @@ import sys
 import os
 import time
 
-# This adds the parent directory of 'klab' to the path,
-# assuming the file structure is klab/examples/example_keithley_usage.py
-# and the package is at klab/python/klab
-package_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'python'))
-sys.path.insert(0, package_path)
+# Method 1: Add klab package to path for this script only
+# This adds the klab/python directory to the path so we can import klab modules
+klab_python_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'python'))
+if klab_python_path not in sys.path:
+    sys.path.insert(0, klab_python_path)
 
-# Set envormnemnt variable KLAB_DEBUG_STREAM to true
-os.environ['KLAB_DEBUG_STREAM'] = 'False'
+print(f"Added to Python path: {klab_python_path}")
 
-from klab.instruments import Keithley2450
+# Verify the path was added correctly
+try:
+    import klab
+    print(f"✓ Successfully imported klab from: {klab.__file__ if hasattr(klab, '__file__') else 'built-in'}")
+except ImportError as e:
+    print(f"✗ Failed to import klab: {e}")
+    print(f"Current sys.path includes: {[p for p in sys.path if 'klab' in p.lower()]}")
+    raise(e)
+
+# Set environment variable KLAB_DEBUG_STREAM to control debug output
+os.environ['KLAB_DEBUG_STREAM'] = 'False'  # Set to 'True' to see communication details
+
+# Now import klab modules (path was added above)
+from klab.instruments.drivers.keithley_2450 import Keithley2450
 from klab.instruments.scpi_instrument import NoQuote
 
 # --- Setup ---

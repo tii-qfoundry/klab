@@ -94,3 +94,5 @@ position = stage.get_position()
 - **Extensible**: Easy to add new instruments and protocols
 - **Robust**: Proper error handling and resource management
 - **Consistent**: Same interface regardless of underlying communication method
+
+## 6. Documentation
