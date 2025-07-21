@@ -8,5 +8,5 @@ Copyright (c) 2025, Technology Innovation Institute. All rights reserved.
 
 """
 # Import instrument classes for easy access
-from .instruments.klab_instrument import KlabInstrument
+from .instruments import KlabInstrument
 from .pcells import KLabPCellLibrary

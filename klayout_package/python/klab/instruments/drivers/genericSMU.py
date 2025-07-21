@@ -1,18 +1,16 @@
 """
 klab - A Python package for KLayout integration with lab instrumentation.
 
-This package provides tools and utilities to enhance and automate instrument control in KLayout,
-a popular layout viewer and editor for integrated circuits.
-
 Copyright (c) 2025, Technology Innovation Institute. All rights reserved.
-
 """
+## Generic SMU Driver
+# This driver is a dummy implementation for development purposes.
+
+
 from klab.instruments.abstract_classes import SMU
 from klab.instruments.yaml_utils import yaml_method
 import random
 
-# This is a generic driver for development purposes.
-# It simulates a Source Measure Unit (SMU) using the SCPIInstrument base class
 class GenericSMU(SMU):
     """
     A dummy driver for a generic Source Measure Unit (SMU) for development.

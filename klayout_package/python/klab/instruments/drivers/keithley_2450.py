@@ -1,19 +1,19 @@
 """
 klab - A Python package for KLayout integration with lab instrumentation.
 
-This package provides tools and utilities to enhance and automate instrument control in KLayout,
-a popular layout viewer and editor for integrated circuits.
-
 Copyright (c) 2025, Technology Innovation Institute. All rights reserved.
-
 """
-# ==================================================================
-# A hybrid driver for the Keithley 2450 SMU, demonstrating three
-# ways of defining and calling methods:
+## Keithley 2450 SMU Driver
+# This driver provides a high-level interface for controlling the Keithley 2450 SMU.
+# It demonstrates how to use both explicit Python methods and dynamic SCPI commands
+# to interact with the instrument. The driver is designed to be flexible and extensible,
+# allowing for easy addition of new methods via a YAML configuration file.
+#
+# Ways of defining and calling methods:
 #   1. Explicitly in Python (e.g., set_average_count).
 #   2. Dynamically from a YAML file (e.g., enable_source, if defined).
 #   3. On-the-fly via the SCPI proxy (e.g., self.source.function('VOLT')).
-# ==================================================================
+
 
 # Add klab to path if not already present
 from klab.instruments.abstract_classes import SMU
@@ -44,7 +44,7 @@ class Keithley2450(SMU):
     # structured commands to the instrument, which are not defined in the driver
     # but are constructed on-the-fly. When using abstract classes like SMU, abstract 
     # methods need to be defined in the driver class, even if they are explicitly 
-    # implemented in the YAML file.
+    # implemented in the YAML file. The yaml dricers are availabl in klayout_package/tech
 
 
     # Use this decorator to indicate that this method is defined in the YAML driver file.

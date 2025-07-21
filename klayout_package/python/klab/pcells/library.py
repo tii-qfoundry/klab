@@ -1,12 +1,14 @@
 """
 klab - A Python package for KLayout integration with lab instrumentation.
 
-This package provides tools and utilities to enhance and automate instrument control in KLayout,
-a popular layout viewer and editor for integrated circuits.
-
 Copyright (c) 2025, Technology Innovation Institute. All rights reserved.
 
 """
+## KLab PCell Library
+# This module defines a KLayout library that contains all the PCell definitions as an example
+# implementation of a resistance measurement PCell. Klab is designed for this type of definition
+# to be distributed as part of the technology specifications, so that klab remains agnostic of the
+# setup or process definitions.
 
 import pya
 

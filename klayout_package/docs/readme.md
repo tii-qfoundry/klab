@@ -1,31 +1,96 @@
-# KMeasurement Documentation
-## 1. Overview
-KMeasurement is a KLayout package designed to bridge the gap between chip layout and electrical characterization. It allows users to control and automate measurement instruments directly from the KLayout interface, streamlining the process of testing and validating integrated circuits.
+# klab Documentation
 
-The core philosophy is to integrate test-rule definitions and instrument control into the design environment, enabling a "measurement-aware" layout workflow.
+## 1. Overview
+
+klab is a KLayout package designed to bridge the gap between chip layout and electrical characterization. It provides a stable and flexible framework for controlling laboratory instruments directly from KLayout, streamlining the process of testing and validating integrated circuits.
+
+The core philosophy is to integrate test-rule definitions and instrument control into the design environment, enabling a "measurement-aware" layout workflow while avoiding the complexities of heavyweight scientific packages that are difficult to deploy in KLayout's embedded Python environment.
+
+You need to install at least py_yaml (pakcage python_libraries), pyvisa and packaging, and optionally libximc (for the native controller of Standa Motor Controller distributed as an example). Drivers can be develloped within the klab package, but the project structure allows for them to be part of the technology specification instead, which is better a low weigth base package.
 
 ## 2. Core Features
-- Instrument Control: Directly manage and operate common lab equipment (SMUs, motor controllers, etc.) using the powerful qcodes framework.
 
-- PCell-based Instruments: Instruments are defined as parametric cells (PCells) in your layout. Instantiating an instrument PCell makes its controls available in the KMeasurement tab.
+### Flexible Communication Architecture
+- **Pluggable Backends**: Support for VISA/SCPI instruments and custom communication protocols
+- **Protocol Agnostic**: Easy integration of instruments using TCP/IP, USB, Serial, or specialized protocols like libximc
+- **Backward Compatible**: Existing VISA-based instruments work unchanged
 
-- Technology-Integrated Test Rules: Define and standardize complete measurement procedures directly within your KLayout technology files (.lyt or an associated YAML/JSON file). This allows you to specify not just voltage/current ranges, but entire test recipes like 'MOSFET Id-Vg sweep' or 'Resistor Linearity Test', complete with sweep parameters, compliance limits, and timing delays. By linking test protocols to the PDK, you ensure consistency and repeatability. A comprehensive default set of rules is provided for technologies without specific definitions, ensuring the tool is always ready for ad-hoc measurements out of the box.
+### Instrument Control
+- **Lightweight Design**: Self-contained framework that avoids complex dependencies
+- **Hybrid Driver Model**: Combines Python code with YAML configuration for maximum flexibility
+- **Dynamic SCPI Proxy**: Access any SCPI command without writing wrapper code
 
-- Dynamic UI: A dedicated "Measurement" tab appears in KLayout, dynamically populating with controls corresponding to the instrument PCells present in your active layout.
+### PCell-based Instruments
+- Instruments are defined as parametric cells (PCells) in your layout
+- Instantiating an instrument PCell makes its controls available in the klab measurement interface
+- Visual integration between layout and measurement setup
 
-Extensible Architecture: The package is designed to be easily extendable. Adding support for new instruments is as simple as creating a new PCell and a corresponding drivers. It supports lightweigth development of drivers for SCPI based instruments.
+### Technology-Integrated Test Rules
+- Define complete measurement procedures in YAML files within your technology
+- Standardize test protocols like 'MOSFET Id-Vg sweep' or 'Resistor Linearity Test'
+- Include sweep parameters, compliance limits, timing delays, and complete recipes
+- Ensure consistency and repeatability across teams and projects
 
-# 3. Installation
-KMeasurement is distributed as a KLayout Salt package (.kip).
+### Organized Abstract Classes
+- Clear interfaces for different instrument types (SMU, VNA, MotorStage)
+- Each abstract class in its own module for better maintainability
+- Easy to extend with new instrument types
 
-- Open KLayout.
+### Dynamic UI
+- Dedicated "Measurement" tab in KLayout
+- Controls dynamically populate based on instrument PCells in your layout
+- Real-time instrument status and control
 
-- Navigate to Tools > Manage Packages.
+### Extensible Architecture
+- Simple process for adding new SCPI instruments (just create a YAML file)
+- Custom communication backends for non-SCPI instruments
+- Minimal code required for new instrument support
 
-- Click Install New Package and select the KMeasurement-vx.x.x.kip file.
+## 3. Installation
 
-- KLayout will automatically install the package. Upon first load, it will check for and attempt to install required Python dependencies (qcodes, pyvisa, etc.). This may take a moment.
+klab is distributed as a KLayout Salt package (.kip).
 
-- After installation, restart KLayout.
+1. **Download**: Get the latest klab-vx.x.x.kip file
+2. **Open KLayout**: Launch your KLayout application
+3. **Install Package**: 
+   - Navigate to Tools > Manage Packages
+   - Click "Install New Package" and select the klab-vx.x.x.kip file
+4. **Automatic Setup**: KLayout will automatically install the package and check for required Python dependencies (pyvisa, etc.)
+5. **Restart**: Restart KLayout to complete the installation
+6. **Verify**: A new "Measurement" menu will appear in the main menu bar
 
-- A new "Measurement" menu will appear in the main menu bar, confirming the successful installation.
+## 4. Quick Start
+
+### Basic SMU Usage
+```python
+from klab.instruments.drivers.keithley_2450 import Keithley2450
+
+# Connect to instrument
+smu = Keithley2450(name="My SMU", address="TCPIP0::192.168.1.100::INSTR")
+
+# Use YAML-defined methods
+smu.source_voltage(voltage=1.0, current_compliance=0.1)
+current = smu.measure_current()
+
+# Use dynamic SCPI commands
+smu.system.beeper(500, 1)  # Sends ":SYSTem:BEEPer 500,1"
+```
+
+### Motor Stage with Custom Backend
+```python
+from klab.instruments.drivers.standa_8smc4 import Standa8SMC4
+
+# Uses custom XimcBackend automatically
+stage = Standa8SMC4(name="XY Stage", address="virtual_motor_controller_1.bin")
+stage.move_to(1000)
+position = stage.get_position()
+```
+
+## 5. Architecture Benefits
+
+- **Lightweight**: No heavy dependencies that are difficult to install in KLayout
+- **Flexible**: Supports any communication protocol through custom backends
+- **Maintainable**: Clear separation between instrument logic and communication
+- **Extensible**: Easy to add new instruments and protocols
+- **Robust**: Proper error handling and resource management
+- **Consistent**: Same interface regardless of underlying communication method

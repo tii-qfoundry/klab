@@ -1,15 +1,19 @@
 """
 klab - A Python package for KLayout integration with lab instrumentation.
 
-This package provides tools and utilities to enhance and automate instrument control in KLayout,
-a popular layout viewer and editor for integrated circuits.
-
 Copyright (c) 2025, Technology Innovation Institute. All rights reserved.
-
 """
 
 # Abstract instrument classes
-from .abstract_classes import SMU, VNA
+from .abstract_classes import SMU, VNA, MotorStage
 
-# Import all drivers
-from .drivers import *
+# KLab Instrument class
+# This class serves as a base for all instrument implementations in the klab package.
+from .klab_instrument import KLabInstrument
+
+# Import default drivers
+from .drivers import (
+    Keithley2450,
+    KeysightE5080B,
+    GenericSMU,
+)
