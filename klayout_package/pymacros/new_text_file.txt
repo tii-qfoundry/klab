@@ -1,5 +1,0 @@
-pyvisa
-pyvisa-py
-jsonschema
-qcodes
-qcodes_contrib_drivers

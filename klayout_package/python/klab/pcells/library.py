@@ -10,7 +10,10 @@ Copyright (c) 2025, Technology Innovation Institute. All rights reserved.
 # to be distributed as part of the technology specifications, so that klab remains agnostic of the
 # setup or process definitions.
 
-import pya
+try:
+    import pya
+except ImportError:
+    import klayout.db as pya
 
 # Import the PCell classes you want to include in the library
 from .resistanceMeasurement import ResistanceMeasurement

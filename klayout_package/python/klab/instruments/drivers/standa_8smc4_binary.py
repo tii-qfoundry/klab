@@ -2,6 +2,7 @@
 klab - A Python package for KLayout integration with lab instrumentation.
 
 Copyright (c) 2025, Technology Innovation Institute. All rights reserved.
+
 """
 ## Standa 8SMC4-USB Driver
 # Concrete driver for Standa 8SMC4-USB motor controllers. This
@@ -12,7 +13,7 @@ Copyright (c) 2025, Technology Innovation Institute. All rights reserved.
 
 from ..abstract_classes import MotorStage
 from ..klab_instrument import enum_parameter_class
-import pyvisa as visa
+
 import struct
 import time
 import collections

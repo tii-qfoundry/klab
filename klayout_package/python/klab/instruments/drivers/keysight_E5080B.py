@@ -2,13 +2,14 @@
 klab - A Python package for KLayout integration with lab instrumentation.
 
 Copyright (c) 2025, Technology Innovation Institute. All rights reserved.
+
 """
 ## 
 # Example of driver implementation for a SCPI instrument, specifically the 
 # Keysight E5080B Network Analyzer, using only parameters specified in a 
 # YAML file.
 
-from ..scpi_instrument import ScpiInstrument
+from ..scpi_instrument import ScpiInstrument, NoQuote
 
 class KeysightE5080B(ScpiInstrument):   
     """

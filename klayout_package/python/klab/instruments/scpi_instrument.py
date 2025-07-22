@@ -1,9 +1,6 @@
 """
 klab - A Python package for KLayout integration with lab instrumentation.
 
-This package provides tools and utilities to enhance and automate instrument control in KLayout,
-a popular layout viewer and editor for integrated circuits.
-
 Copyright (c) 2025, Technology Innovation Institute. All rights reserved.
 
 """
@@ -28,11 +25,15 @@ q = _QueryMarker()
 
 class NoQuote:
     """
-    A wrapper class to indicate that a string argument should not be
-    enclosed in quotation marks when sent in a SCPI command.
-    
+    A wrapper to prevent strings from being quoted in SCPI commands.
+
+    SCPI commands sometimes require arguments that are not strings, but look
+    like them (e.g., `VOLT` in `:SOUR:FUNC VOLT`). This wrapper ensures that
+    such arguments are sent without surrounding quotes.
+
     Example:
-        smu.source.function(NoQuote('VOLT')) # Sends: :SOUR:FUNC VOLT
+        >>> smu.source.function(NoQuote('VOLT'))
+        # Sends the command: :SOUR:FUNC VOLT
     """
     def __init__(self, value):
         self.value = str(value)
@@ -41,17 +42,30 @@ class NoQuote:
         return self.value
 
 class SCPICommandProxy:
-    """Dynamic proxy for SCPI commands."""
+    """
+    A dynamic proxy for building and executing SCPI commands fluently.
+
+    This class enables a more intuitive, attribute-based syntax for constructing
+    SCPI commands. Instead of manually writing command strings like
+    `instrument.write(":SOUR:VOLT 1.0")`, you can use a chain of attributes:
+    `instrument.source.voltage(1.0)`.
+
+    The proxy automatically handles command termination:
+    - If called with arguments, it constructs a 'set' command.
+    - If called without arguments, it appends a '?' to form a 'query' command.
+    """
     
     def __init__(self, instrument, prefix=""):
         self._instrument = instrument
         self._prefix = prefix
     
     def __getattr__(self, name):
+        """Chains attributes to build the SCPI command string."""
         new_prefix = f"{self._prefix}:{name}" if self._prefix else name
         return SCPICommandProxy(self._instrument, new_prefix)
     
     def __call__(self, *args):
+        """Executes the command as a write or query."""
         command = self._prefix
     
         if args:
@@ -68,7 +82,26 @@ class SCPICommandProxy:
             return None
 
 class ScpiInstrument(KlabInstrument):
-    """An instrument that uses SCPI and supports dynamic command generation."""
+    """
+    A base class for SCPI-based instruments with dynamic and YAML-driven methods.
+
+    This class extends `KlabInstrument` to provide powerful features for
+    interacting with instruments that follow the SCPI standard.
+
+    Features:
+        - **Dynamic Command Proxy**: Access any SCPI command via chained
+          attribute calls (e.g., `instr.system.beeper()`).
+        - **YAML-defined Methods**: Define complex, high-level methods in external
+          YAML files for clean separation of logic and code.
+        - **Standard SCPI Commands**: Pre-implemented common commands like
+          `get_idn()`, `reset()`, and `clear_status()`.
+
+    Args:
+        name (str): A friendly name for the instrument.
+        address (str): The VISA resource string for the instrument.
+        yaml_file (str, optional): The path to a YAML file defining custom methods.
+        **kwargs: Additional arguments passed to the `KlabInstrument` constructor.
+    """
     
     def __init__(self, name, address, yaml_file=None, **kwargs):
         super().__init__(name, address, **kwargs)
@@ -82,11 +115,11 @@ class ScpiInstrument(KlabInstrument):
             self._validate_yaml_methods()
     
     def _load_spec_from_yaml(self, yaml_file):
-        """Load instrument specification from a YAML file."""
+        """Loads the instrument specification from a YAML file."""
         self.spec = load_yaml_spec(yaml_file)
     
     def _discover_yaml_methods(self):
-        """Discover and list methods defined in the YAML spec file."""
+        """Discovers and lists methods defined in the associated YAML file."""
         if 'methods' in self.spec:
             self.yaml_methods = list(self.spec['methods'].keys())
             print(f"\nAvailable YAML-defined methods for {self.name}:")
@@ -94,7 +127,7 @@ class ScpiInstrument(KlabInstrument):
                 print(f"  - {method}")
     
     def _validate_yaml_methods(self):
-        """Validate that all methods marked as YAML methods have YAML implementations."""
+        """Ensures that methods decorated with @yaml_method have a YAML implementation."""
         yaml_required_methods = []
         
         # Find all methods marked with @yaml_method
@@ -119,7 +152,18 @@ class ScpiInstrument(KlabInstrument):
             )
     
     def _execute_yaml_method(self, method_name, **kwargs):
-        """Execute a method defined in the YAML spec."""
+        """
+        Executes a command sequence defined in the instrument's YAML file.
+
+        Args:
+            method_name (str): The name of the method to execute.
+            **kwargs: Arguments to be formatted into the command strings.
+
+        Returns:
+            list or None: A list of results from any query commands, or a single
+                          value if only one query was made. Returns None if all
+                          commands were write operations.
+        """
         if 'methods' not in self.spec or method_name not in self.spec['methods']:
             raise AttributeError(f"Method '{method_name}' not defined in YAML spec")
         
@@ -169,7 +213,13 @@ class ScpiInstrument(KlabInstrument):
     def _safe_nested_call(self, call_string: str):
         """
         Safely parses and calls a nested method string from YAML without using eval().
-        Example: "set_current(current=1e-6, vlim=0.1)"
+        
+        This allows YAML methods to call other Python or YAML methods on the same
+        instrument instance, enabling command reuse and more complex sequences.
+
+        Example:
+            `"set_current(current=1e-6, vlim=0.1)"` in YAML will call
+            `self.set_current(current=1e-6, vlim=0.1)`.
         """
         match = re.match(r"^\s*([\w\.]+)\((.*)\)\s*$", call_string)
         if not match:
@@ -197,7 +247,16 @@ class ScpiInstrument(KlabInstrument):
         return method_to_call(**kwargs_to_pass)
 
     def get_available_methods(self):
-        """Returns a dictionary with information about available methods."""
+        """
+        Returns a dictionary detailing the available methods for the instrument.
+
+        This includes methods defined in Python, methods defined in the YAML
+        file, and a combined list of all available methods.
+
+        Returns:
+            dict: A dictionary with keys 'yaml_methods', 'python_methods',
+                  and 'all_methods'.
+        """
         python_methods = [
             method for method in dir(self) 
             if callable(getattr(self, method)) 
@@ -212,7 +271,13 @@ class ScpiInstrument(KlabInstrument):
         }
     
     def __getattr__(self, name):
-        """Dynamically generate SCPI commands."""
+        """
+        Overrides attribute access to prioritize YAML methods over the SCPI proxy.
+
+        If a method name exists in the loaded YAML specification, it returns a
+        callable that executes the YAML method. Otherwise, it falls back to
+        the `SCPICommandProxy` to handle dynamic command generation.
+        """
         # First check if the attribute exists in the YAML methods
         if 'methods' in self.spec and name in self.spec['methods']:
             def method_caller(**kwargs):
@@ -224,13 +289,19 @@ class ScpiInstrument(KlabInstrument):
     
     # --- Common SCPI Commands ---
     def get_idn(self) -> dict:
-        """Gets the instrument's identification string (*IDN?)."""
+        """
+        Queries the instrument's identification string (*IDN?).
+
+        Returns:
+            dict: A dictionary containing the 'vendor', 'model', 'serial',
+                  and 'firmware' information.
+        """
         response = self.ask("*IDN?")
         parts = response.strip().split(',')
         return {'vendor': parts[0], 'model': parts[1], 'serial': parts[2], 'firmware': parts[3]}
 
     def reset(self):
-        """Resets the instrument (*RST)."""
+        """Sends a reset command (*RST) to the instrument."""
         self.write("*RST")
         
     def clear_status(self):
@@ -238,42 +309,37 @@ class ScpiInstrument(KlabInstrument):
         self.write("*CLS")
 
     def wait_for_op_complete(self):
-        """Waits for all pending operations to complete (*WAI)."""
+        """Blocks until all pending operations are complete (*WAI)."""
         self.write("*WAI")
 
     def get_status_byte(self) -> int:
-        """Gets the status byte of the instrument (STB?)."""
+        """
+        Queries the instrument's status byte (*STB?).
+
+        Returns:
+            int: The integer value of the status byte.
+        """
         response = self.ask("*STB?")
         return int(response.strip())
     
-    # # Overload the query method to handle SCPI checks for when the response is ready
-    # def query(self, command, retries=5, delay=0.5):
-    #     """Send a query command and return the response, with retries for connection errors."""
-    #     attempt = 0
-    #     while attempt < retries:
-    #         try:
-    #             OPC = self._visa_instrument.query("*OPC?")
-    #             if int(OPC.strip()) == 1:
-    #                 result = self._visa_instrument.query(command)
-    #                 return result.strip()
-    #             else:
-    #                 #time.sleep(delay)
-    #                 raise ConnectionError(f"Instrument not ready for query: {command}")
-    #         except VisaIOError as e:
-    #             print(f"VISA IO Error during query: {e} (attempt {attempt+1}/{retries})")
-    #             time.sleep(delay)
-    #             attempt += 1
-                
-    #     raise ConnectionError(f"Failed to query '{command}' after {retries} attempts due to repeated VISA IO Errors.")
-    # Overload the query method to handle SCPI checks for when the response is ready
-    
-
     def query(self, command, retries=5, delay=0.5):
         """
-        Send a query command and return the response. This method is designed to be robust
-        for commands that may take time to execute by using SCPI synchronization.
-        It writes the command, waits for the operation to complete, and then reads the result,
-        preventing instrument buffer mismatches.
+        Sends a query and returns the response, with added robustness.
+
+        This method overrides the base query to provide retry logic for
+        `VisaIOError`, which can occur during long measurements. It also
+        clears the VISA buffer on error to prevent reading stale data.
+
+        Args:
+            command (str): The SCPI query command to send.
+            retries (int): The number of times to retry on a `VisaIOError`.
+            delay (float): The delay in seconds between retries.
+
+        Returns:
+            str: The instrument's response, stripped of whitespace.
+        
+        Raises:
+            ConnectionError: If the query fails after all retries.
         """
         if not self._visa_instrument:
             print(f"Warning: {self.name} is not connected")

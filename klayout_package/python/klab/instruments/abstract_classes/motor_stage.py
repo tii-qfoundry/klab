@@ -1,9 +1,6 @@
 """
 klab - A Python package for KLayout integration with lab instrumentation.
 
-This package provides tools and utilities to enhance and automate instrument control in KLayout,
-a popular layout viewer and editor for integrated circuits.
-
 Copyright (c) 2025, Technology Innovation Institute. All rights reserved.
 
 """
@@ -17,68 +14,77 @@ from ..klab_instrument import KlabInstrument
 
 
 class MotorStage(KlabInstrument, ABC):
-    """Abstract Base Class for a Motorized Stage.
-    
-    This class defines the interface for controlling motorized positioning stages.
-    It inherits from KlabInstrument to support various communication backends.
     """
-    
+    Abstract base class for motor stage controllers.
+
+    This class provides a standard interface for controlling motorized stages,
+    abstracting away the specifics of the underlying hardware. It inherits
+    from `KlabInstrument` to leverage its communication backend system,
+    allowing for drivers that use VISA, serial, or custom protocols.
+    """
+
     @abstractmethod
     def get_position(self, axis: int = 0) -> float:
-        """Get the current position of the specified axis.
-        
+        """
+        Retrieves the current position of the specified axis.
+
         Args:
-            axis: The axis number (default: 0)
-            
+            axis (int, optional): The axis to query. Defaults to 0.
+
         Returns:
-            float: The current position in device units
+            float: The current position in device-specific units (e.g., steps, mm).
         """
         raise NotImplementedError
-    
+
     @abstractmethod
     def move_to(self, position: float, axis: int = 0):
-        """Move to an absolute position.
-        
+        """
+        Moves the specified axis to an absolute position.
+
         Args:
-            position: The target position in device units
-            axis: The axis number (default: 0)
+            position (float): The target absolute position.
+            axis (int, optional): The axis to move. Defaults to 0.
         """
         raise NotImplementedError
-    
+
     @abstractmethod
     def move_by(self, distance: float, axis: int = 0):
-        """Move by a relative distance.
-        
+        """
+        Moves the specified axis by a relative distance.
+
         Args:
-            distance: The distance to move in device units
-            axis: The axis number (default: 0)
+            distance (float): The relative distance to move.
+            axis (int, optional): The axis to move. Defaults to 0.
         """
         raise NotImplementedError
-    
+
     @abstractmethod
     def set_speed(self, speed: float, axis: int = 0):
-        """Set the movement speed for the specified axis.
-        
+        """
+        Sets the movement speed for the specified axis.
+
         Args:
-            speed: The movement speed in device units per second
-            axis: The axis number (default: 0)
+            speed (float): The desired speed in device-specific units.
+            axis (int, optional): The axis to configure. Defaults to 0.
         """
         raise NotImplementedError
-    
+
     @abstractmethod
     def stop(self, axis: int = 0):
-        """Stop movement on the specified axis.
-        
+        """
+        Stops any ongoing movement on the specified axis immediately.
+
         Args:
-            axis: The axis number (default: 0)
+            axis (int, optional): The axis to stop. Defaults to 0.
         """
         raise NotImplementedError
-    
+
     @abstractmethod
     def home(self, axis: int = 0):
-        """Home the specified axis to its reference position.
-        
+        """
+        Initiates the homing sequence for the specified axis.
+
         Args:
-            axis: The axis number (default: 0)
+            axis (int, optional): The axis to home. Defaults to 0.
         """
         raise NotImplementedError

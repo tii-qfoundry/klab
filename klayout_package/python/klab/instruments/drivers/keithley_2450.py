@@ -2,6 +2,7 @@
 klab - A Python package for KLayout integration with lab instrumentation.
 
 Copyright (c) 2025, Technology Innovation Institute. All rights reserved.
+
 """
 ## Keithley 2450 SMU Driver
 # This driver provides a high-level interface for controlling the Keithley 2450 SMU.
@@ -16,9 +17,9 @@ Copyright (c) 2025, Technology Innovation Institute. All rights reserved.
 
 
 # Add klab to path if not already present
-from klab.instruments.abstract_classes import SMU
-from klab.instruments.yaml_utils import yaml_method
-from klab.instruments.scpi_instrument import NoQuote
+from ..abstract_classes import SMU
+from ..yaml_utils import yaml_method
+from ..scpi_instrument import NoQuote
 import time
 
 class Keithley2450(SMU):

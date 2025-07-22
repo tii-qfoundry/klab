@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<klayout-macro>
+ <description/>
+ <version/>
+ <category/>
+ <prolog/>
+ <epilog/>
+ <doc/>
+ <autorun>true</autorun>
+ <autorun-early>false</autorun-early>
+ <priority>0</priority>
+ <shortcut/>
+ <show-in-menu>false</show-in-menu>
+ <group-name/>
+ <menu-path/>
+ <interpreter>ruby</interpreter>
+ <dsl-interpreter-name/>
+ <text>
+
+module KLab
+  # This module defines the main menu for the KLab plugin
+  class Menu
+    def self.setup
+      app = RBA::Application.instance
+      main_menu = app.main_window.menu
+
+      # --- Create the main "KLab" menu ---
+      # This menu will hold general actions like the reloader.
+      klab_menu = main_menu.insert_menu("end", "klab_menu", "KLab Tools")
+      
+      # Add an action for measurement tools under "KLab Tools"
+      measure_action = RBA::Action.new
+      measure_action.title = "Run Measurement"
+      # measure_action.icon = "file path" # Optional icon
+      measure_action.on_triggered do
+        puts "Not implemented here. Use the measurement window."
+      end
+
+      klab_menu.insert_item("klab_menu.end", "measurement_tools", measure_action)
+    end
+  end
+
+  Menu.setup  
+end
+
+</text>
+</klayout-macro>

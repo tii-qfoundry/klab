@@ -8,7 +8,6 @@ import sys
 import os
 import time
 
-# Method 1: Add klab package to path for this script only
 # This adds the klab/python directory to the path so we can import klab modules
 klab_python_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'python'))
 if klab_python_path not in sys.path:

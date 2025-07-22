@@ -2,6 +2,7 @@
 klab - A Python package for KLayout integration with lab instrumentation.
 
 Copyright (c) 2025, Technology Innovation Institute. All rights reserved.
+
 """
 ## Standa 8SMC4 Motor Stage Driver using libximc
 # This module provides a custom communication backend for XIMC devices
@@ -9,10 +10,11 @@ Copyright (c) 2025, Technology Innovation Institute. All rights reserved.
 
 import os
 import pathlib
+
 import libximc.highlevel as ximc
 
-from klab.instruments.abstract_classes import MotorStage
-from klab.instruments.klab_instrument import CommunicationBackend
+from ..abstract_classes import MotorStage
+from ..communication_backend import CommunicationBackend
 
 class XimcBackend(CommunicationBackend):
     """Communication backend for XIMC (libximc) devices."""

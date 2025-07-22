@@ -2,14 +2,14 @@
 klab - A Python package for KLayout integration with lab instrumentation.
 
 Copyright (c) 2025, Technology Innovation Institute. All rights reserved.
+
 """
 ## Generic SMU Driver
 # This driver is a dummy implementation for development purposes.
 
 
-from klab.instruments.abstract_classes import SMU
-from klab.instruments.yaml_utils import yaml_method
-import random
+from ..abstract_classes import SMU
+from ..yaml_utils import yaml_method
 
 class GenericSMU(SMU):
     """

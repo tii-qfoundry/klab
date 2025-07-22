@@ -1,59 +1,81 @@
+"""
+klab - A Python package for KLayout integration with lab instrumentation.
+
+Copyright (c) 2025, Technology Innovation Institute. All rights reserved.
+
+"""
 import functools
 import inspect
 import yaml
 import os
 
 def yaml_method(func):
-    """Decorator that marks a method as being implemented in YAML."""
+    """
+    A decorator that marks a method as requiring an implementation in a YAML file.
+
+    This decorator is used in abstract base classes or other instrument
+    drivers to enforce that a concrete implementation provides a corresponding
+    method definition in its associated YAML specification.
+
+    If a method decorated with `@yaml_method` does not have a corresponding
+    entry in the YAML file's `methods` section, a `NotImplementedError`
+    is raised during instrument initialization.
+
+    Example:
+        In an abstract class:
+        ```python
+        @yaml_method
+        def measure_resistance(self, **kwargs):
+            # This will be implemented in YAML
+            return self._execute_yaml_method('measure_resistance', **kwargs)
+        ```
+    """
     @functools.wraps(func)
     def wrapper(self, *args, **kwargs):
         # Convert positional args to kwargs based on function signature
         sig = inspect.signature(func)
-        params = list(sig.parameters.keys())[1:]  # Skip 'self'
-        
-        for i, arg in enumerate(args):
-            if i < len(params):
-                kwargs[params[i]] = arg
-        
-        # Delegate to the YAML implementation
-        method_name = func.__name__
-        return self._execute_yaml_method(method_name, **kwargs)
-        
+        bound_args = sig.bind(self, *args, **kwargs)
+        bound_args.apply_defaults()
+
+        # The first argument is 'self', so we skip it.
+        all_kwargs = {k: v for k, v in bound_args.arguments.items() if k != 'self'}
+
+        # The actual execution is handled by the instrument's YAML method runner
+        return self._execute_yaml_method(func.__name__, **all_kwargs)
+    
     wrapper._is_yaml_method = True
     return wrapper
 
-def load_yaml_spec(yaml_file):
+def load_yaml_spec(file_path: str) -> dict:
     """
-    Load an instrument specification from a YAML file.
-    It searches first for an absolute path, then for a path relative to the
-    package's 'tech' directory.
+    Loads an instrument's command specification from a YAML file.
+
+    This function is responsible for finding and parsing the YAML file that
+    defines an instrument's high-level methods. It searches for the file
+    relative to the calling module's path and in the current working directory.
+
+    Args:
+        file_path (str): The name or relative path of the YAML file.
+
+    Returns:
+        dict: The parsed YAML content as a Python dictionary.
+
+    Raises:
+        FileNotFoundError: If the YAML file cannot be found.
     """
-    # First, try the path as-is (e.g., an absolute path or relative to the current working directory)
-    if os.path.isfile(yaml_file):
-        with open(yaml_file, 'r', encoding='utf-8') as f:
-            return yaml.safe_load(f)
-    
-    # If that fails, search relative to the package's 'tech' directory.
-    # This avoids a circular import of the 'klab' package.
-    try:
-        # Get the absolute path to this file (yaml_utils.py)
-        this_file_path = os.path.abspath(__file__)
-        
-        # Navigate up from .../python/klab/instruments/ to the package root
-        # that contains the 'python' and 'tech' directories.
-        package_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(this_file_path))))
-        
-        # Construct the full path to the yaml file within the 'tech' directory
-        tech_path = os.path.join(package_root, 'tech', yaml_file)
-        
-        if os.path.isfile(tech_path):
-            with open(tech_path, 'r', encoding='utf-8') as f:
+    # Get the directory of the file that called this function
+    caller_frame = inspect.stack()[1]
+    caller_path = os.path.dirname(os.path.abspath(caller_frame.filename))
+
+    # List of paths to check for the YAML file
+    search_paths = [
+        os.path.join(caller_path, file_path),  # Relative to the caller's module
+        file_path,                             # Relative to the current working directory
+    ]
+
+    for path in search_paths:
+        if os.path.exists(path):
+            with open(path, 'r') as f:
                 return yaml.safe_load(f)
-    except Exception:
-        # If path resolution fails for any reason, we'll fall through to the final error.
-        pass
-        
-    raise FileNotFoundError(
-        f"Could not find YAML file: '{yaml_file}'. "
-        "Searched in the current directory and in the package's 'tech' directory."
-    )
+    
+    raise FileNotFoundError(f"Could not find the YAML specification file '{file_path}' in any of the search paths.")

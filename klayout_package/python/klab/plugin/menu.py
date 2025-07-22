@@ -6,7 +6,12 @@
 # functions.
 # ==================================================================
 
-import pya
+try:
+    import pya
+except ImportError:
+    # pya module is not available (likely running outside KLayout)
+    import klayout.db as pya
+
 import sys
 import os
 
@@ -17,129 +22,101 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 # Import the MeasurementDock class from the easurementDock.py file
 from  klab.plugin.measurementDock import MeasurementDock
 from importlib import reload
+import klab.plugin.measurementDock
 
 
 measurement_dock_instance = None
 
-def refresh_measurement_dock():
+def register_klab_menu():
     """
-    Destroys the old measurement dock widget if it exists, and creates a
-    new one from the latest code. This allows for live UI updates.
+    Creates and registers the 'Measurement' menu in the KLayout main window.
+
+    This function sets up the main entry point for the klab plugin in the
+    KLayout user interface. It adds a "Measurement" menu with the following
+    actions:
+        - "Show Measurement Tab": Shows or hides the MeasurementDock.
+        - "Refresh Measurement Tab": Reloads and re-registers the dock.
+        - "Run Measurement": Triggers a measurement on the selected PCell.
+    """
+    app = pya.Application.instance()
+    mw = app.main_window()
+
+    # --- Create Menu if it doesn't exist ---
+    if not mw.menu().find_menu('klab_menu'):
+        menu = mw.menu().insert_menu('klab_menu', "Measurement")
+    else:
+        menu = mw.menu().find_menu('klab_menu')
+
+    # --- Action: Show/Hide Measurement Tab ---
+    action_show = pya.QAction("Show Measurement Tab", mw)
+    action_show.triggered(toggle_measurement_dock)
+    menu.add_action(action_show)
+
+    # --- Action: Refresh Measurement Tab ---
+    action_refresh = pya.QAction("Refresh Measurement Tab", mw)
+    action_refresh.triggered(refresh_measurement_dock)
+    menu.add_action(action_refresh)
+
+    # --- Action: Run Measurement ---
+    action_run = pya.QAction("Run Measurement", mw)
+    action_run.triggered(run_measurement_on_selected)
+    menu.add_action(action_run)
+
+def toggle_measurement_dock():
+    """
+    Shows or hides the MeasurementDock widget.
+
+    If the dock does not exist, it creates a new instance. If it is
+    visible, it hides it, and if it is hidden, it shows it.
     """
     global measurement_dock_instance
-    main_window = pya.Application.instance().main_window()
+    if measurement_dock_instance is None:
+        measurement_dock_instance = MeasurementDock(pya.Application.instance().main_window())
+    
+    if measurement_dock_instance.is_visible():
+        measurement_dock_instance.hide()
+    else:
+        measurement_dock_instance.show()
+        pya.Application.instance().main_window().addDockWidget(pya.Qt.RightDockWidgetArea, measurement_dock_instance)
 
-    # --- Step 1: Destroy the old dock widget if it exists ---
-    if measurement_dock_instance is not None:
-        print("Removing old measurement dock...")
-        main_window.removeDockWidget(measurement_dock_instance)
-        # Use deleteLater() for safe cleanup of Qt objects
-        measurement_dock_instance.deleteLater()
+def refresh_measurement_dock():
+    """
+
+    Reloads and re-registers the MeasurementDock.
+
+    This function is useful for development, allowing UI and logic changes
+    to be applied without restarting KLayout. It reloads the
+    `measurementDock` module and creates a new instance of the dock.
+    """
+    global measurement_dock_instance
+    if measurement_dock_instance:
+        measurement_dock_instance.hide()
+        del measurement_dock_instance
         measurement_dock_instance = None
+    
+    # Reload the module and create a new instance
+    reload(klab.plugin.measurementDock)
+    from klab.plugin.measurementDock import MeasurementDock
+    measurement_dock_instance = MeasurementDock(pya.Application.instance().main_window())
+    measurement_dock_instance.show()
+    pya.Application.instance().main_window().addDockWidget(pya.Qt.RightDockWidgetArea, measurement_dock_instance)
+    print("MeasurementDock has been refreshed.")
 
-    # --- Step 2: Create and register a new dock widget ---
-    # This will use the newly reloaded MeasurementDock class definition.
-    print("Creating new measurement dock...")
-    measurement_dock_instance = MeasurementDock(main_window)
-    main_window.addDockWidget(pya.Qt.RightDockWidgetArea, measurement_dock_instance)
-    print("Measurement Dock (re)created.")
+def run_measurement_on_selected():
+    """
+    Triggers the measurement on the currently selected PCell.
+
+    This function provides a menu-driven way to execute a measurement,
+    calling the `run_measurement` method of the active MeasurementDock
+    instance.
+    """
+    global measurement_dock_instance
+    if measurement_dock_instance:
+        measurement_dock_instance.run_measurement()
+    else:
+        pya.Application.instance().main_window().message("Measurement tab is not active.", 2000)
 
 # This is the single entry point called by Ruby at startup.
 def setup_plugin():
     refresh_measurement_dock()
 
-
-# def register_measurement_dock():
-#     """
-#     Creates and registers the dockable measurement tab with the KLayout main window.
-#     """
-#     global measurement_dock_instance
-#     main_window = pya.Application.instance().main_window()
-
-#     if measurement_dock_instance is not None: 
-#         print("Measurement Dock already registered, releasing.")
-#         main_window.removeDockWidget(measurement_dock_instance)
-#         # Use deleteLater() for safe cleanup of Qt objects
-#         measurement_dock_instance.deleteLater()
-#         measurement_dock_instance = None
-
-#     measurement_dock_instance = MeasurementDock(main_window)
-#     main_window.addDockWidget(pya.Qt.RightDockWidgetArea, measurement_dock_instance)
-#     print("Measurement Dock registered.")
-
-
-# class MeasurementMenu(pya.QObject):
-#     """
-#     Manages the 'Measurement' menu in the KLayout main window.
-#     This class is responsible for creating the menu and handling its actions.
-#     """
-#     def __init__(self, window):
-#         super(MeasurementMenu, self).__init__()
-#         self.window = window
-#         self.menu_name = "&Measurement"
-#         self.menu = self.window.menu().insert_menu(".help", "klab_menu", self.menu_name)
-#         self.measurement_dock = None
-
-#         # Add initial actions to the menu
-#         self.create_action("Setup Measurement", self.setup_measurement)
-#         self.create_action("Run Measurement", self.run_measurement)
-        
-#     def create_action(self, text, slot):
-#         """Helper function to create a QAction and add it to the menu."""
-#         action = pya.QAction(text, self.window)
-#         action.triggered(slot)
-#         #self.menu.addAction(action)
-
-#     def setup_measurement(self):
-#         """
-#         Action to open the measurement setup tab. This now creates and
-#         shows the dockable widget.
-#         """
-#         if self.measurement_dock is None:
-#             # Create an instance of our custom dock widget
-#             self.measurement_dock = MeasurementDock(self.window)
-#             # Add it to the main window, docked on the right
-#             self.window.addDockWidget(pya.Qt.RightDockWidgetArea, self.measurement_dock)
-        
-#         # Ensure the dock is visible
-#         self.measurement_dock.show()
-#         pya.Logger.info("Measurement dock shown.")
-
-
-#     def run_measurement(self):
-#         """
-#         Placeholder for the action to run a measurement.
-#         """
-#         pya.Logger.info("Running measurement...")
-#         # Later, this will trigger the measurement runner.
-#         pya.MessageBox.info("Info", "Measurement run initiated (placeholder).", pya.MessageBox.Ok)
-
-# # Global instance of the menu handler
-# measurement_menu_handler = None
-
-# def register_menu(window):
-#     """
-#     Function to be called by KLayout to register the menu.
-#     """
-#     global measurement_menu_handler
-#     if measurement_menu_handler is None:
-#         measurement_menu_handler = MeasurementMenu(window)
-
-
-# if __name__ == "__main__":
-#     """
-#     This block is for testing the menu in a standalone script.
-#     It will not run when KLayout loads this module.
-#     """
-#     app = pya.Application.instance()
-#     main_window = app.main_window()
-
-#     # Register the menu
-#     register_measurement_dock()
-#     #register_menu(main_window)
-
-#     # Show the main window to test the menu
-#     main_window.show()
-    
-#     # Start the application event loop
-#     #app.exec_()
