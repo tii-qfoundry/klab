@@ -1,11 +1,9 @@
-# ==================================================================
-# FILE: klab/python/klab/plugin/menu.py
-# ==================================================================
-# This script is responsible for creating the "Measurement" menu in
-# the KLayout main window and connecting its actions to placeholder
-# functions.
-# ==================================================================
+"""
+klab - A Python package for KLayout integration with lab instrumentation.
 
+Copyright (c) 2025, Technology Innovation Institute. All rights reserved.
+
+"""
 try:
     import pya
 except ImportError:
@@ -15,15 +13,10 @@ except ImportError:
 import sys
 import os
 
-# Add the parent directory to the system path to allow for relative imports
-# Note: KLayout's Salt manager should handle this, but this is a fallback.
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-# Import the MeasurementDock class from the easurementDock.py file
-from  klab.plugin.measurementDock import MeasurementDock
 from importlib import reload
-import klab.plugin.measurementDock
-
+from klab.plugin.measurementDock import MeasurementDock
 
 measurement_dock_instance = None
 
@@ -95,8 +88,6 @@ def refresh_measurement_dock():
         measurement_dock_instance = None
     
     # Reload the module and create a new instance
-    reload(klab.plugin.measurementDock)
-    from klab.plugin.measurementDock import MeasurementDock
     measurement_dock_instance = MeasurementDock(pya.Application.instance().main_window())
     measurement_dock_instance.show()
     pya.Application.instance().main_window().addDockWidget(pya.Qt.RightDockWidgetArea, measurement_dock_instance)

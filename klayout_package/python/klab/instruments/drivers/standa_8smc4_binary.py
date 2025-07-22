@@ -13,6 +13,7 @@ Copyright (c) 2025, Technology Innovation Institute. All rights reserved.
 
 from ..abstract_classes import MotorStage
 from ..klab_instrument import enum_parameter_class
+from ..comm import VisaBackend
 
 import struct
 import time
@@ -31,7 +32,7 @@ STATE_PWR = enum_parameter_class("PowerState",{"UNKNOWN": 0x00,"OFF": 0x01,"NORM
 STATE_ENC = enum_parameter_class("EncoderState",{"ABSENT": 0x00,"UNKNOWN": 0x01,"MALFUNC": 0x02,"REFERSE": 0x03,"OK": 0x04,},default="UNKNOWN")
 STATE_WND = enum_parameter_class("WindowState",{"ABSENT": 0x00,"UNKNOWN": 0x01,"MALFUNC": 0x02,"OK": 0x03,},default="UNKNOWN")
 
-# --- Standa 8SMC4 Driver ---
+
 
 class Standa8SMC4Bin(MotorStage):
     """
@@ -50,7 +51,7 @@ class Standa8SMC4Bin(MotorStage):
     }
 
     def __init__(self, name, address, **kwargs):
-        super().__init__(name, address, **kwargs)
+        super().__init__(name, address,communication_backend=VisaBackend, **kwargs)
         if self._visa_instrument:
             # Standa devices require specific termination characters
             self._visa_instrument.read_termination = ''

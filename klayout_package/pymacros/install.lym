@@ -225,6 +225,7 @@ def install():
         print(f"{PACKAGE_NAME} package loaded successfully.")
     except Exception as e:
         print(f"An error occurred while loading the {PACKAGE_NAME} package: {e}")
+        raise(e)
         
 
 # Import the reload function from dev_tools to refresh the package. 

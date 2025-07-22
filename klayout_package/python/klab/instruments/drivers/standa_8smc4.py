@@ -14,9 +14,9 @@ import pathlib
 import libximc.highlevel as ximc
 
 from ..abstract_classes import MotorStage
-from ..communication_backend import CommunicationBackend
+from ..comm import CommBackend
 
-class XimcBackend(CommunicationBackend):
+class XimcBackend(CommBackend):
     """Communication backend for XIMC (libximc) devices."""
     
     def __init__(self):

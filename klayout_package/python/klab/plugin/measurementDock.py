@@ -1,22 +1,19 @@
-# ==================================================================
-# This file contains the implementation of the main measurement
-# dockable widget (the "Measurement" tab).
-# ==================================================================
+"""
+klab - A Python package for KLayout integration with lab instrumentation.
 
-# ==================================================================
-# This file contains the implementation of the main measurement
-# dockable widget (the "Measurement" tab).
-# ==================================================================
+Copyright (c) 2025, Technology Innovation Institute. All rights reserved.
 
+"""
 try:
     import pya
 except ImportError:
     # pya module is not available (likely running outside KLayout)
     import klayout.db as pya
 
+
 class MeasurementDock(pya.QDockWidget):
     """
-    The main user interface for the klab measurement plugin.
+    The measurement user interface for the klab measurement plugin.
 
     This class creates a dockable widget in KLayout, providing a centralized
     "Measurement" tab. It allows users to select a measurement-capable PCell

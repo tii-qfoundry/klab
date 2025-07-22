@@ -2,21 +2,6 @@
 klab - A Python package for KLayout integration with lab instrumentation.
 
 Copyright (c) 2025, Technology Innovation Institute. All rights reserved.
-
-"""
-
-# Abstract instrument classes
-from .abstract_classes import SMU, VNA, MotorStage
-
-# KLab Instrument class
-# This class serves as a base for all instrument implementations in the klab package.
-from .klab_instrument import KlabInstrument
-from .communication_backend import CommunicationBackend, VisaBackend
-
-"""
-klab - A Python package for KLayout integration with lab instrumentation.
-
-Copyright (c) 2025, Technology Innovation Institute. All rights reserved.
 """
 
 # Abstract instrument classes
