@@ -9,6 +9,7 @@ import functools
 import inspect
 import yaml
 import os
+from sys import path as pypath
 
 def yaml_method(func):
     """
@@ -64,6 +65,7 @@ def load_yaml_spec(file_path: str) -> dict:
     Raises:
         FileNotFoundError: If the YAML file cannot be found.
     """
+    
     # Get the directory of the file that called this function
     caller_frame = inspect.stack()[1]
     caller_path = os.path.dirname(os.path.abspath(caller_frame.filename))
@@ -72,8 +74,8 @@ def load_yaml_spec(file_path: str) -> dict:
     search_paths = [
         os.path.join(caller_path, file_path),  # Relative to the caller's module
         file_path,                             # Relative to the current working directory
-    ]
-
+    ] + [os.path.join(path_route,file_path) for path_route in pypath]
+    
     for path in search_paths:
         if os.path.exists(path):
             with open(path, 'r') as f:

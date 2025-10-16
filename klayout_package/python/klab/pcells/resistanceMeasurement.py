@@ -58,7 +58,8 @@ class ResistanceMeasurement(pya.PCellDeclarationHelper):
         Called when PCell parameters are changed. Updates the VISA address and can trigger measurement.
         """
         self.visa_address = f"TCPIP0::{self.ip_address}::INSTR"
-        print(f"Coercing parameters: IP Address set to {self.visa_address}")
+        print(f"IP Address set to {self.visa_address}")
+        
     def produce_impl(self):
         """
         Generates the layout geometry for the PCell, including a marker and a text label
@@ -96,7 +97,7 @@ class ResistanceMeasurement(pya.PCellDeclarationHelper):
             print(f"Connecting to SMU at {self.visa_address}...")
             smu = Keithley2450(name='pcell_smu', address=self.visa_address)
 
-            if not smu.is_connected():
+            if not smu.is_connected:
                 self.value = "Connection Failed"
                 print("Error: Could not connect to the instrument.")
                 return
@@ -129,3 +130,4 @@ class ResistanceMeasurement(pya.PCellDeclarationHelper):
         except Exception as e:
             self.value = "Measurement Error"
             print(f"An error occurred during measurement: {e}")
+            raise(e)

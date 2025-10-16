@@ -18,9 +18,9 @@ print(f"Added to Python path: {klab_python_path}")
 # Verify the path was added correctly
 try:
     import klab
-    print(f"✓ Successfully imported klab from: {klab.__file__ if hasattr(klab, '__file__') else 'built-in'}")
+    print(f"Successfully imported klab from: {klab.__file__ if hasattr(klab, '__file__') else 'built-in'}")
 except ImportError as e:
-    print(f"✗ Failed to import klab: {e}")
+    print(f"Failed to import klab: {e}")
     print(f"Current sys.path includes: {[p for p in sys.path if 'klab' in p.lower()]}")
     raise(e)
 

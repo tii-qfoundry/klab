@@ -180,6 +180,12 @@ def install():
         sys.path.insert(0, klab_python_dir)
         print(f"Added main package source directory to Python path: {klab_python_dir}")
     
+    
+    klab_tech_dir = os.path.join(package_root, 'tech')
+    if klab_tech_dir not in sys.path:
+        sys.path.insert(0, klab_tech_dir)
+        print(f"Added main package source directory to Python path: {klab_tech_dir}")
+    
     # Determine the KLayout user data directory in a platform-specific way.
     if sys.platform == "win32":
         # On Windows, the correct path is in %APPDATA%\KLayout
