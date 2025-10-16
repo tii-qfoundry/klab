@@ -78,6 +78,7 @@ def load_yaml_spec(file_path: str) -> dict:
     
     for path in search_paths:
         if os.path.exists(path):
+            print(f"Reading from {path}")
             with open(path, 'r') as f:
                 return yaml.safe_load(f)
     

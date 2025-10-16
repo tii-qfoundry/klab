@@ -103,7 +103,7 @@ class ResistanceMeasurement(pya.PCellDeclarationHelper):
                 return
 
             # Use the high-level measurement method from the driver
-            response = smu.meas_resistance(current=1e-5, voltage_compliance=0.1, count=2)
+            response = smu.meas_resistance(current=100e-9, voltage_compliance=10e-3, count=2)
             if isinstance(response, list) and all(isinstance(item, list) for item in response):
                 response = [item for sublist in response for item in sublist]
             resistance = response[0] if isinstance(response, list) else response

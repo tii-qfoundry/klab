@@ -39,12 +39,14 @@ methods:
   # Sets up the instrument to measure voltage.
   source_current:
     - "*RST"
+    - "ROUT:TERM REAR"
     - "SENS:FUNC \"VOLT\""
     - "SENS:VOLT:RANG:AUTO ON"
     - "SOUR:FUNC CURR"
     - "SOUR:DEL 0.1"
     - "SOUR:CURR {current}"
     - "SOUR:CURR:VLIM {voltage_compliance}"
+    - "OUTP OFF"
 
   # Setup instrument to measure resistance.
   set_resistance:
