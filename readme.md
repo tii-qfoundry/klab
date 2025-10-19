@@ -48,7 +48,7 @@ You need to install at least py_yaml (pakcage python_libraries), pyvisa and pack
 
 ## 3. Installation
 
-klab is distributed as a KLayout Salt package (.kip).
+klab is distributed as a KLayout Salt package (.kip) [Not yet, for now clone the repo and link to it in the salt folder]
 
 1. **Download**: Get the latest klab-vx.x.x.kip file
 2. **Open KLayout**: Launch your KLayout application
